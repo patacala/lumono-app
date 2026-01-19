@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User Entity
+// ============================================
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String
+  name     String
+  active   Boolean @default(true)
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  permissions            UserPermission[]
+  productsCreated        Product[]              @relation("ProductCreatedBy")
+  productsUpdated        Product[]              @relation("ProductUpdatedBy")
+  productsDeleted        Product[]              @relation("ProductDeletedBy")
+  suppliersCreated       Supplier[]             @relation("SupplierCreatedBy")
+  suppliersUpdated       Supplier[]             @relation("SupplierUpdatedBy")
+  suppliersDeleted       Supplier[]             @relation("SupplierDeletedBy")
+  locationsCreated       Location[]             @relation("LocationCreatedBy")
+  locationsUpdated       Location[]             @relation("LocationUpdatedBy")
+  locationsDeleted       Location[]             @relation("LocationDeletedBy")
+  inventoryMovementsCreated InventoryMovement[] @relation("InventoryMovementCreatedBy")
+  refreshTokens          RefreshToken[]
+  categoriesCreated      Category[]             @relation("CategoryCreatedBy")
+  categoriesUpdated      Category[]             @relation("CategoryUpdatedBy")
+  categoriesDeleted      Category[]             @relation("CategoryDeletedBy")
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// ============================================
+// Permission Entity
+// ============================================
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., "product.create", "inventory.in"
+  description String?
+  category    String   @default("general") // e.g., "product", "inventory", "user", "report"
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  version   Int       @default(1)
+
+  // Relations
+  userPermissions UserPermission[]
+
+  @@index([name])
+  @@index([category])
+  @@index([deletedAt])
+  @@map("permissions")
+}
+
+// ============================================
+// UserPermission Entity (Join table)
+// ============================================
+model UserPermission {
+  id           String   @id @default(uuid())
+  userId       String
+  permissionId String
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+  @@index([deletedAt])
+  @@map("user_permissions")
+}
+
+// ============================================
+// Category Entity
+// ============================================
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  color       String?   @default("#6366f1")
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  products      Product[]
+  userCreatedBy User?     @relation("CategoryCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy User?     @relation("CategoryUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy User?     @relation("CategoryDeletedBy", fields: [deletedBy], references: [id])
+
+  @@index([name])
+  @@index([deletedAt])
+  @@map("categories")
+}
+
+// ============================================
+// Product Entity
+// ============================================
+model Product {
+  id             String    @id @default(uuid())
+  sku            String    @unique
+  name           String
+  description    String?
+  unitPrice      Decimal   @db.Decimal(10, 2)
+  supplierId     String?
+  categoryId     String?
+  stockThreshold Int       @default(10)
+  unit           String    @default("unid") // kg, unid, gal, caj, L, g, etc.
+  expirationDate DateTime?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  supplier           Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  category           Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  inventoryMovements InventoryMovement[]
+  userCreatedBy      User?               @relation("ProductCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy      User?               @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy      User?               @relation("ProductDeletedBy", fields: [deletedBy], references: [id])
+
+  @@index([sku])
+  @@index([name])
+  @@index([supplierId])
+  @@index([categoryId])
+  @@index([deletedAt])
+  @@index([expirationDate])
+  @@map("products")
+}
+
+// ============================================
+// Supplier Entity
+// ============================================
+model Supplier {
+  id      String  @id @default(uuid())
+  code    String  @unique
+  name    String
+  contact String?
+  email   String?
+  phone   String?
+  address String?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  products      Product[]
+  userCreatedBy User?     @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy User?     @relation("SupplierUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy User?     @relation("SupplierDeletedBy", fields: [deletedBy], references: [id])
+
+  @@index([code])
+  @@index([name])
+  @@index([deletedAt])
+  @@map("suppliers")
+}
+
+// ============================================
+// Location Entity (Warehouse/Storage location)
+// ============================================
+model Location {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  type        String  @default("warehouse") // warehouse, store, etc.
+  address     String?
+  description String?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  inventoryMovementsOrigin      InventoryMovement[] @relation("OriginLocation")
+  inventoryMovementsDestination InventoryMovement[] @relation("DestinationLocation")
+  userCreatedBy                 User?               @relation("LocationCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy                 User?               @relation("LocationUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy                 User?               @relation("LocationDeletedBy", fields: [deletedBy], references: [id])
+
+  @@index([code])
+  @@index([name])
+  @@index([type])
+  @@index([deletedAt])
+  @@map("locations")
+}
+
+// ============================================
+// InventoryMovement Entity
+// ============================================
+model InventoryMovement {
+  id                String   @id @default(uuid())
+  productId         String
+  type              String // "IN", "OUT", "TRANSFER", "ADJUSTMENT"
+  quantity          Int
+  originLocationId  String?
+  destLocationId    String?
+  referenceDocument String?
+  notes             String?
+  unitPrice         Decimal? @db.Decimal(10, 2)
+
+  // Audit fields (only creation - movements are immutable)
+  createdAt DateTime @default(now())
+  createdBy String?
+  version   Int      @default(1)
+
+  // Relations
+  product          Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  originLocation   Location? @relation("OriginLocation", fields: [originLocationId], references: [id], onDelete: Restrict)
+  destLocation     Location? @relation("DestinationLocation", fields: [destLocationId], references: [id], onDelete: Restrict)
+  userCreatedBy    User?     @relation("InventoryMovementCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([productId])
+  @@index([type])
+  @@index([originLocationId])
+  @@index([destLocationId])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+// ============================================
+// RefreshToken Entity (for JWT rotation)
+// ============================================
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
