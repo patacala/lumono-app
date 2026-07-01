@@ -4,9 +4,13 @@ import { useMemo } from 'react';
 import { useAuth } from '@/modules/auth/context/auth-context';
 import { useProducts, Product } from '@/modules/products/hooks/use-products';
 import { useCategories } from '@/modules/categories/hooks/use-categories';
+import { useTodayStats } from '@/modules/inventory/hooks/use-inventory';
 import { Card, CardHeader, CardBody, CardTitle } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
 import { getDaysUntilExpiration } from '@/shared/lib/stock-utils';
+import { StockChart } from '@/modules/reports/components/stock-chart';
+import { StockValueChart } from '@/modules/reports/components/stock-value-chart';
+import { useStockSocket } from '@/shared/hooks/use-stock-socket';
+import { useSalesOrderCounts } from '@/modules/sales-orders/hooks/use-sales-orders';
 import Link from 'next/link';
 
 // Icons
@@ -41,6 +45,30 @@ const EmptyIcon = () => (
   </svg>
 );
 
+const ArrowInIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z" clipRule="evenodd" />
+  </svg>
+);
+
+const ArrowOutIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-4.75a.75.75 0 01-1.5 0V8.66L7.3 10.76a.75.75 0 01-1.1-1.02l3.25-3.5a.75.75 0 011.1 0l3.25 3.5a.75.75 0 11-1.1 1.02l-1.95-2.1v4.59z" clipRule="evenodd" />
+  </svg>
+);
+
+const TransferIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+    <path fillRule="evenodd" d="M13.2 2.24a.75.75 0 00.04 1.06l2.1 1.95H6.75a.75.75 0 000 1.5h8.59l-2.1 1.95a.75.75 0 101.02 1.1l3.5-3.25a.75.75 0 000-1.1l-3.5-3.25a.75.75 0 00-1.06.04zm-6.4 8a.75.75 0 00-1.06-.04l-3.5 3.25a.75.75 0 000 1.1l3.5 3.25a.75.75 0 101.02-1.1l-2.1-1.95h8.59a.75.75 0 000-1.5H4.66l2.1-1.95a.75.75 0 00.04-1.06z" clipRule="evenodd" />
+  </svg>
+);
+
+const AdjustIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+    <path d="M10 3.75a2 2 0 10-4 0 2 2 0 004 0zM17.25 4.5a.75.75 0 000-1.5h-5.5a.75.75 0 000 1.5h5.5zM5 3.75a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5a.75.75 0 01.75.75zM4.25 17a.75.75 0 000-1.5h-1.5a.75.75 0 000 1.5h1.5zM17.25 17a.75.75 0 000-1.5h-5.5a.75.75 0 000 1.5h5.5zM9 10a.75.75 0 01-.75.75h-5.5a.75.75 0 010-1.5h5.5A.75.75 0 019 10zM17.25 10.75a.75.75 0 000-1.5h-1.5a.75.75 0 000 1.5h1.5zM14 10a2 2 0 10-4 0 2 2 0 004 0zM10 16.25a2 2 0 10-4 0 2 2 0 004 0z" />
+  </svg>
+);
+
 interface AlertSection {
   categoryName: string;
   categoryId: string;
@@ -51,6 +79,11 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { data: productsData } = useProducts({ limit: 500 });
   const { data: categories } = useCategories();
+  const { data: todayStats } = useTodayStats();
+  const { data: orderCounts } = useSalesOrderCounts();
+
+  // Wire real-time stock updates
+  useStockSocket();
 
   const products = productsData?.data || [];
 
@@ -178,6 +211,114 @@ export default function DashboardPage() {
             <p className="text-sm text-surface-500 font-medium">Por Vencer</p>
           </CardBody>
         </Card>
+      </div>
+
+      {/* Today's Movement KPIs */}
+      {todayStats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="group hover:shadow-lg transition-all duration-300">
+            <CardBody className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-success-100 text-success-600">
+                  <ArrowInIcon />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-surface-900">{todayStats.IN}</p>
+                  <p className="text-xs text-surface-500 font-medium">Entradas Hoy</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300">
+            <CardBody className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-danger-100 text-danger-600">
+                  <ArrowOutIcon />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-surface-900">{todayStats.OUT}</p>
+                  <p className="text-xs text-surface-500 font-medium">Salidas Hoy</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300">
+            <CardBody className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-info-100 text-info-600">
+                  <TransferIcon />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-surface-900">{todayStats.TRANSFER}</p>
+                  <p className="text-xs text-surface-500 font-medium">Transferencias Hoy</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300">
+            <CardBody className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warning-100 text-warning-600">
+                  <AdjustIcon />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-surface-900">{todayStats.ADJUSTMENT}</p>
+                  <p className="text-xs text-surface-500 font-medium">Ajustes Hoy</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {/* Order KPIs */}
+      {orderCounts && (
+        <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
+          <Link href="/dashboard/purchase-orders?status=PENDING">
+            <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
+              <CardBody className="p-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-warning-100 text-warning-600">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-surface-900">{orderCounts.pending}</p>
+                    <p className="text-xs text-surface-500 font-medium">OV Pendientes</p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </Link>
+
+          <Link href="/dashboard/sales-orders?status=PREPARING">
+            <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
+              <CardBody className="p-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-info-100 text-info-600">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-surface-900">{orderCounts.preparing}</p>
+                    <p className="text-xs text-surface-500 font-medium">OV en Preparacion</p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </Link>
+        </div>
+      )}
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <StockChart />
+        <StockValueChart />
       </div>
 
       {/* Alert Sections */}

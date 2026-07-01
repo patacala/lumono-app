@@ -95,3 +95,63 @@ Frontend: Use `hasPermission('permission.name')` from `useAuth()` hook.
 - **Optimistic locking** - `version` field on entities prevents concurrent update conflicts
 - **Stock cannot be negative** - Inventory OUT operations validate available stock
 - **All movements are atomic** - Inventory operations run in Prisma transactions
+
+## Naming Conventions
+
+### Files & Folders
+- **Backend files**: `kebab-case` (e.g., `product.repository.impl.ts`, `create-product.use-case.ts`)
+- **Frontend files**: `kebab-case` (e.g., `auth-context.tsx`, `api-client.ts`)
+- **Entities**: `PascalCase` class names matching filename (e.g., `product.entity.ts` → `Product`)
+- **Use cases**: `VerbNounUseCase` pattern (e.g., `CreateProductUseCase`, `RegisterInventoryInUseCase`)
+- **Controllers**: `PluralNounController` (e.g., `ProductsController`, `LocationsController`)
+- **Repositories**: `INounRepository` for interface, `NounRepositoryImpl` for implementation
+- **DTOs**: `VerbNounDto` (e.g., `CreateProductDto`, `UpdateLocationDto`)
+
+### Database (Prisma)
+- Model names: `PascalCase` singular (`Product`, `Location`)
+- Table mapping: `snake_case` plural (`@@map("products")`)
+- Column mapping: `snake_case` (`@map("created_at")`)
+
+## Testing Conventions
+
+### Backend (Jest)
+- Test files: `*.spec.ts` next to the file being tested
+- Unit test use cases by mocking repository interfaces
+- Use `Test.createTestingModule()` for module-level tests
+- Name test suites after the class: `describe('CreateProductUseCase', () => { ... })`
+
+### Frontend (Vitest + Playwright)
+- Unit/component tests: `*.test.tsx` or `*.spec.tsx`
+- E2E tests in `apps/web/e2e/` directory
+- Use `@testing-library/react` for component testing
+- Use `vi.mock()` for mocking modules
+
+## Import Rules Between Layers
+
+```
+Domain ← Use Cases ← Adapters
+```
+- `src/domain/` must NOT import from `src/use-cases/` or `src/adapters/`
+- `src/use-cases/` may import from `src/domain/` only
+- `src/adapters/` may import from `src/domain/` and `src/use-cases/`
+- Never create circular dependencies between modules
+
+## MCP Servers
+
+Install these MCP servers for enhanced development:
+```bash
+claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
+claude mcp add prisma -- npx -y prisma-mcp-server
+claude mcp add playwright -- npx -y @anthropic/mcp-playwright
+```
+
+## Graphify Knowledge Graph
+
+This project has a knowledge graph at `graphify-out/` with community structure and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when `graphify-out/graph.json` exists
+- Use `graphify path "A" "B"` for relationships between nodes
+- Use `graphify explain "<concept>"` for focused concepts
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost)

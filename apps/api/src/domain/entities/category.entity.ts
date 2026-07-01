@@ -4,5 +4,6 @@ export interface Category extends BaseEntity {
   name: string;
   description?: string;
   color?: string;
+  icon?: string;
   productCount?: number;
 }

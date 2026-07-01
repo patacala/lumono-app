@@ -1,4 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator';
 import { LoginUseCase } from '@/use-cases/auth/login.use-case';
 import { RefreshTokenUseCase } from '@/use-cases/auth/refresh-token.use-case';
@@ -19,6 +20,7 @@ class RefreshTokenDto {
   refreshToken: string;
 }
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(

@@ -11,6 +11,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { ILocationRepository } from '@/domain/ports/repositories/location.repository';
@@ -58,6 +59,8 @@ class UpdateLocationDto {
   version: number;
 }
 
+@ApiTags('Locations')
+@ApiBearerAuth()
 @Controller('locations')
 export class LocationsController {
   constructor(

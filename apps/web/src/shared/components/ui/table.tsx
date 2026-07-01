@@ -115,9 +115,9 @@ export function TableHeader({
   );
 }
 
-export function TableCell({ children, className = '' }: TableProps) {
+export function TableCell({ children, className = '', colSpan }: TableProps & { colSpan?: number }) {
   return (
-    <td className={`px-6 py-4 whitespace-nowrap text-sm text-surface-800 ${className}`}>
+    <td colSpan={colSpan} className={`px-6 py-4 whitespace-nowrap text-sm text-surface-800 ${className}`}>
       {children}
     </td>
   );

@@ -2,6 +2,9 @@ FROM node:20-alpine AS base
 
 WORKDIR /app
 
+# bcrypt needs native compilation on Alpine
+RUN apk add --no-cache python3 make g++
+
 # Install dependencies only when needed
 FROM base AS deps
 COPY package*.json ./

@@ -290,6 +290,8 @@ export class ProductRepositoryImpl implements IProductRepository {
     return {
       ...product,
       unitPrice: parseFloat(product.unitPrice.toString()),
+      salePrice: product.salePrice ? parseFloat(product.salePrice.toString()) : undefined,
+      taxRate: product.taxRate ? parseFloat(product.taxRate.toString()) : undefined,
     };
   }
 }

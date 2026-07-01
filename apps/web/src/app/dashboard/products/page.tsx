@@ -54,11 +54,11 @@ export default function ProductsPage() {
     if (stock === undefined) return null;
 
     if (stock === 0) {
-      return <Badge variant="coral">Out of Stock</Badge>;
+      return <Badge variant="danger">Out of Stock</Badge>;
     } else if (stock < threshold) {
-      return <Badge variant="ink">Low Stock: {stock}</Badge>;
+      return <Badge variant="warning">Low Stock: {stock}</Badge>;
     } else {
-      return <Badge variant="ocean">{stock} units</Badge>;
+      return <Badge variant="success">{stock} units</Badge>;
     }
   }
 

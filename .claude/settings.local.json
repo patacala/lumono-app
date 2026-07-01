@@ -7,7 +7,48 @@
       "Bash(npx prisma migrate dev:*)",
       "Bash(npm run dev:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill -9)"
+      "Bash(xargs kill -9)",
+      "WebSearch",
+      "Bash(wc:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npm uninstall:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(pip3 install:*)",
+      "Bash(curl:*)",
+      "Bash(source:*)",
+      "Bash(export:*)",
+      "Bash($HOME/.local/bin/graphify:*)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx nest:*)",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)"
+    ]
+  },
+  "hooks": {
+    "PreCommit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/peterbarranco/Desktop/lumono && npm run lint"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_FILE_PATH\" | grep -q 'schema.prisma'; then cd /Users/peterbarranco/Desktop/lumono/apps/api && npx prisma generate; fi"
+          }
+        ]
+      }
     ]
   }
 }

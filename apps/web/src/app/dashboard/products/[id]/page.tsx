@@ -37,11 +37,11 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     if (stock === undefined) return null;
 
     if (stock === 0) {
-      return <Badge variant="coral">Out of Stock</Badge>;
+      return <Badge variant="danger">Out of Stock</Badge>;
     } else if (stock < threshold) {
-      return <Badge variant="ink">Low Stock: {stock}</Badge>;
+      return <Badge variant="warning">Low Stock: {stock}</Badge>;
     } else {
-      return <Badge variant="ocean">{stock} units</Badge>;
+      return <Badge variant="success">{stock} units</Badge>;
     }
   }
 
@@ -58,7 +58,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
           <Badge variant="info" className="font-mono">{product.sku}</Badge>
           {product.supplierName && (
-            <Badge variant="gray">{product.supplierName}</Badge>
+            <Badge variant="neutral">{product.supplierName}</Badge>
           )}
         </div>
         {product.description && (
@@ -132,7 +132,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           <CardBody className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Threshold</span>
-              <Badge variant="gray">{product.stockThreshold} units</Badge>
+              <Badge variant="neutral">{product.stockThreshold} units</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">On Hand</span>

@@ -140,6 +140,17 @@ class ApiClient {
     );
   }
 
+  async patch<T>(endpoint: string, data: unknown, includeAuth: boolean = true): Promise<T> {
+    return this.request<T>(
+      endpoint,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+      includeAuth
+    );
+  }
+
   async delete<T>(endpoint: string, data?: unknown, includeAuth: boolean = true): Promise<T> {
     return this.request<T>(
       endpoint,

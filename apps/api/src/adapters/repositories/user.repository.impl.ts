@@ -107,7 +107,7 @@ export class UserRepositoryImpl implements IUserRepository {
     const users = await this.prisma.user.findMany({
       where: { deletedAt: null },
       include: {
-        userPermissions: {
+        permissions: {
           where: { deletedAt: null },
           include: {
             permission: true,
@@ -120,7 +120,7 @@ export class UserRepositoryImpl implements IUserRepository {
       const { password, ...userWithoutPassword } = user;
       return {
         ...userWithoutPassword,
-        permissions: user.userPermissions.map(up => ({
+        permissions: user.permissions.map(up => ({
           id: up.permission.id,
           name: up.permission.name,
           description: up.permission.description,

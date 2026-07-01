@@ -5,6 +5,12 @@ export interface CreateProductDto {
   name: string;
   description?: string;
   unitPrice: number;
+  barcode?: string;
+  imageUrl?: string;
+  brand?: string;
+  salePrice?: number;
+  status?: string;
+  taxRate?: number;
   supplierId?: string;
   categoryId?: string;
   stockThreshold?: number;
@@ -17,6 +23,12 @@ export interface UpdateProductDto {
   name?: string;
   description?: string;
   unitPrice?: number;
+  barcode?: string;
+  imageUrl?: string;
+  brand?: string;
+  salePrice?: number;
+  status?: string;
+  taxRate?: number;
   supplierId?: string;
   categoryId?: string;
   stockThreshold?: number;

@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -14,35 +12,52 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U lumono']
+      test: ['CMD-SHELL', 'pg_isready -U lumono -d lumono_inventory']
       interval: 10s
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: lumono-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: run the full stack in Docker with `docker compose --profile full up --build`
   api:
+    profiles: ['full']
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     container_name: lumono-api
     restart: unless-stopped
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       DATABASE_URL: postgresql://lumono:lumono_dev_password@postgres:5432/lumono_inventory
       JWT_ACCESS_SECRET: dev_access_secret_change_in_production
       JWT_REFRESH_SECRET: dev_refresh_secret_change_in_production
       JWT_ACCESS_EXPIRATION: 15m
       JWT_REFRESH_EXPIRATION: 7d
       PORT: 3001
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - '3001:3001'
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./apps/api:/app/apps/api
-      - /app/node_modules
-      - /app/apps/api/node_modules
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  redis_data:
 

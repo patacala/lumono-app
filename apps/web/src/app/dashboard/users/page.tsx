@@ -119,7 +119,7 @@ function PermissionsModal({ isOpen, onClose, user, allPermissions }: Permissions
 export default function UsersPage() {
   const { hasPermission } = useAuth();
   const { data: users, isLoading: usersLoading, error: usersError } = useUsers();
-  const { data: allPermissions, error: permissionsError } = usePermissions();
+  const { data: allPermissions } = usePermissions();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);

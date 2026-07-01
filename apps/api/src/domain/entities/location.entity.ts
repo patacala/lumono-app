@@ -6,5 +6,7 @@ export interface Location extends BaseEntity {
   type: string;
   address?: string;
   description?: string;
+  managerId?: string;
+  managerName?: string;
 }
 

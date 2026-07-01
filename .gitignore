@@ -39,6 +39,9 @@ yarn-error.log*
 *.swo
 *~
 
+# Graphify
+graphify-out/
+
 # Prisma
 apps/api/prisma/migrations
 

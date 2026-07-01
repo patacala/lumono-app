@@ -3,13 +3,14 @@ import { PrismaService } from '@/infrastructure/prisma/prisma.service';
 import { IProductRepository } from '@/domain/ports/repositories/product.repository';
 import { ILocationRepository } from '@/domain/ports/repositories/location.repository';
 import { IInventoryMovementRepository } from '@/domain/ports/repositories/inventory-movement.repository';
-import { InventoryMovement } from '@/domain/entities/inventory-movement.entity';
+import { InventoryMovement, MovementSubType } from '@/domain/entities/inventory-movement.entity';
 import { NotFoundError, ValidationError, InsufficientStockError } from '@/domain/errors/domain.error';
 
 export interface RegisterInventoryOutDto {
   productId: string;
   originLocationId: string;
   quantity: number;
+  subType?: MovementSubType;
   referenceDocument?: string;
   notes?: string;
   createdBy?: string;
@@ -56,6 +57,7 @@ export class RegisterInventoryOutUseCase {
       return this.inventoryMovementRepository.create({
         productId: dto.productId,
         type: 'OUT',
+        subType: dto.subType,
         quantity: dto.quantity,
         originLocationId: dto.originLocationId,
         referenceDocument: dto.referenceDocument,

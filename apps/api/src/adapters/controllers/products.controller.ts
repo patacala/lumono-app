@@ -12,6 +12,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { CreateProductUseCase } from '@/use-cases/products/create-product.use-case';
@@ -21,82 +22,43 @@ import { IProductRepository } from '@/domain/ports/repositories/product.reposito
 import { calculatePagination, createPaginatedResponse } from '@/shared/dto/pagination.dto';
 
 class CreateProductDto {
-  @IsString()
-  @IsNotEmpty()
-  sku: string;
-
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @IsNumber()
-  @Min(0)
-  unitPrice: number;
-
-  @IsString()
-  @IsOptional()
-  supplierId?: string;
-
-  @IsString()
-  @IsOptional()
-  categoryId?: string;
-
-  @IsNumber()
-  @Min(1)
-  @IsOptional()
-  stockThreshold?: number;
-
-  @IsString()
-  @IsOptional()
-  unit?: string;
-
-  @IsOptional()
-  expirationDate?: string;
+  @IsString() @IsNotEmpty() sku: string;
+  @IsString() @IsNotEmpty() name: string;
+  @IsString() @IsOptional() description?: string;
+  @IsNumber() @Min(0) unitPrice: number;
+  @IsString() @IsOptional() barcode?: string;
+  @IsString() @IsOptional() imageUrl?: string;
+  @IsString() @IsOptional() brand?: string;
+  @IsNumber() @Min(0) @IsOptional() salePrice?: number;
+  @IsString() @IsOptional() status?: string;
+  @IsNumber() @Min(0) @IsOptional() taxRate?: number;
+  @IsString() @IsOptional() supplierId?: string;
+  @IsString() @IsOptional() categoryId?: string;
+  @IsNumber() @Min(1) @IsOptional() stockThreshold?: number;
+  @IsString() @IsOptional() unit?: string;
+  @IsOptional() expirationDate?: string;
 }
 
 class UpdateProductDto {
-  @IsString()
-  @IsOptional()
-  name?: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  unitPrice?: number;
-
-  @IsString()
-  @IsOptional()
-  supplierId?: string;
-
-  @IsString()
-  @IsOptional()
-  categoryId?: string;
-
-  @IsNumber()
-  @Min(1)
-  @IsOptional()
-  stockThreshold?: number;
-
-  @IsString()
-  @IsOptional()
-  unit?: string;
-
-  @IsOptional()
-  expirationDate?: string;
-
-  @IsNumber()
-  @Min(1)
-  version: number;
+  @IsString() @IsOptional() name?: string;
+  @IsString() @IsOptional() description?: string;
+  @IsNumber() @Min(0) @IsOptional() unitPrice?: number;
+  @IsString() @IsOptional() barcode?: string;
+  @IsString() @IsOptional() imageUrl?: string;
+  @IsString() @IsOptional() brand?: string;
+  @IsNumber() @Min(0) @IsOptional() salePrice?: number;
+  @IsString() @IsOptional() status?: string;
+  @IsNumber() @Min(0) @IsOptional() taxRate?: number;
+  @IsString() @IsOptional() supplierId?: string;
+  @IsString() @IsOptional() categoryId?: string;
+  @IsNumber() @Min(1) @IsOptional() stockThreshold?: number;
+  @IsString() @IsOptional() unit?: string;
+  @IsOptional() expirationDate?: string;
+  @IsNumber() @Min(1) version: number;
 }
 
+@ApiTags('Products')
+@ApiBearerAuth()
 @Controller('products')
 export class ProductsController {
   constructor(

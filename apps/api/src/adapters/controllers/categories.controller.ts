@@ -11,6 +11,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { CreateCategoryUseCase } from '@/use-cases/categories/create-category.use-case';
@@ -48,6 +49,8 @@ class UpdateCategoryDto {
   version: number;
 }
 
+@ApiTags('Categories')
+@ApiBearerAuth()
 @Controller('categories')
 export class CategoriesController {
   constructor(

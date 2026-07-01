@@ -14,6 +14,12 @@ export interface Product {
   name: string;
   description?: string;
   unitPrice: number;
+  barcode?: string;
+  imageUrl?: string;
+  brand?: string;
+  salePrice?: number;
+  status: string;
+  taxRate?: number;
   supplierId?: string;
   supplierName?: string;
   categoryId?: string;

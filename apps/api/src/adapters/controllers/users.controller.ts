@@ -9,6 +9,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsEmail } from 'class-validator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { IUserRepository } from '@/domain/ports/repositories/user.repository';
@@ -34,6 +35,8 @@ class AssignPermissionDto {
   permissionId: string;
 }
 
+@ApiTags('Users')
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   constructor(

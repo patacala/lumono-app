@@ -35,9 +35,26 @@ async function main() {
     
     // Report permissions
     { name: 'report.read', description: 'View reports', category: 'report' },
-    
+
     // User management permissions
     { name: 'user.manage', description: 'Manage users and permissions', category: 'user' },
+
+    // Customer permissions
+    { name: 'customer.create', description: 'Create customers', category: 'customer' },
+    { name: 'customer.read', description: 'View customers', category: 'customer' },
+    { name: 'customer.update', description: 'Update customers', category: 'customer' },
+    { name: 'customer.delete', description: 'Delete customers', category: 'customer' },
+
+    // Purchase Order permissions
+    { name: 'purchase-order.create', description: 'Create purchase orders', category: 'purchase-order' },
+    { name: 'purchase-order.read', description: 'View purchase orders', category: 'purchase-order' },
+    { name: 'purchase-order.update', description: 'Update purchase orders', category: 'purchase-order' },
+    { name: 'purchase-order.receive', description: 'Receive purchase orders', category: 'purchase-order' },
+
+    // Sales Order permissions
+    { name: 'sales-order.create', description: 'Create sales orders', category: 'sales-order' },
+    { name: 'sales-order.read', description: 'View sales orders', category: 'sales-order' },
+    { name: 'sales-order.update', description: 'Update sales orders', category: 'sales-order' },
   ];
 
   console.log('Creating permissions...');
@@ -181,6 +198,22 @@ async function main() {
       referenceDocument: 'PO-2024-002',
       notes: 'Initial stock',
       unitPrice: 149.99,
+      createdBy: adminUser.id,
+    },
+  });
+
+  // Create sample customer
+  console.log('Creating sample customer...');
+  await prisma.customer.upsert({
+    where: { code: 'CLI-001' },
+    update: {},
+    create: {
+      code: 'CLI-001',
+      name: 'Acme Corporation',
+      email: 'orders@acme.com',
+      phone: '+1-555-0200',
+      address: '100 Business Rd.',
+      taxId: '20-12345678-9',
       createdBy: adminUser.id,
     },
   });

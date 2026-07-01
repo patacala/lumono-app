@@ -40,11 +40,21 @@ model User {
   locationsCreated       Location[]             @relation("LocationCreatedBy")
   locationsUpdated       Location[]             @relation("LocationUpdatedBy")
   locationsDeleted       Location[]             @relation("LocationDeletedBy")
+  locationsManaged       Location[]             @relation("LocationManager")
   inventoryMovementsCreated InventoryMovement[] @relation("InventoryMovementCreatedBy")
   refreshTokens          RefreshToken[]
   categoriesCreated      Category[]             @relation("CategoryCreatedBy")
   categoriesUpdated      Category[]             @relation("CategoryUpdatedBy")
   categoriesDeleted      Category[]             @relation("CategoryDeletedBy")
+  customersCreated       Customer[]             @relation("CustomerCreatedBy")
+  customersUpdated       Customer[]             @relation("CustomerUpdatedBy")
+  customersDeleted       Customer[]             @relation("CustomerDeletedBy")
+  purchaseOrdersCreated  PurchaseOrder[]        @relation("PurchaseOrderCreatedBy")
+  purchaseOrdersUpdated  PurchaseOrder[]        @relation("PurchaseOrderUpdatedBy")
+  purchaseOrdersDeleted  PurchaseOrder[]        @relation("PurchaseOrderDeletedBy")
+  salesOrdersCreated     SalesOrder[]           @relation("SalesOrderCreatedBy")
+  salesOrdersUpdated     SalesOrder[]           @relation("SalesOrderUpdatedBy")
+  salesOrdersDeleted     SalesOrder[]           @relation("SalesOrderDeletedBy")
 
   @@index([email])
   @@index([deletedAt])
@@ -111,6 +121,7 @@ model Category {
   name        String    @unique
   description String?
   color       String?   @default("#6366f1")
+  icon        String?
 
   // Audit fields
   createdAt DateTime  @default(now())
@@ -141,6 +152,12 @@ model Product {
   name           String
   description    String?
   unitPrice      Decimal   @db.Decimal(10, 2)
+  barcode        String?   @unique
+  imageUrl       String?
+  brand          String?
+  salePrice      Decimal?  @db.Decimal(10, 2)
+  status         String    @default("ACTIVE") // ACTIVE, INACTIVE, DISCONTINUED
+  taxRate        Decimal?  @db.Decimal(5, 2)
   supplierId     String?
   categoryId     String?
   stockThreshold Int       @default(10)
@@ -160,12 +177,18 @@ model Product {
   supplier           Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   category           Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   inventoryMovements InventoryMovement[]
+  purchaseOrderItems PurchaseOrderItem[]
+  salesOrderItems    SalesOrderItem[]
+  lots               Lot[]
   userCreatedBy      User?               @relation("ProductCreatedBy", fields: [createdBy], references: [id])
   userUpdatedBy      User?               @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
   userDeletedBy      User?               @relation("ProductDeletedBy", fields: [deletedBy], references: [id])
 
   @@index([sku])
   @@index([name])
+  @@index([barcode])
+  @@index([brand])
+  @@index([status])
   @@index([supplierId])
   @@index([categoryId])
   @@index([deletedAt])
@@ -195,10 +218,11 @@ model Supplier {
   version   Int       @default(1)
 
   // Relations
-  products      Product[]
-  userCreatedBy User?     @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
-  userUpdatedBy User?     @relation("SupplierUpdatedBy", fields: [updatedBy], references: [id])
-  userDeletedBy User?     @relation("SupplierDeletedBy", fields: [deletedBy], references: [id])
+  products       Product[]
+  purchaseOrders PurchaseOrder[]
+  userCreatedBy  User?     @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy  User?     @relation("SupplierUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy  User?     @relation("SupplierDeletedBy", fields: [deletedBy], references: [id])
 
   @@index([code])
   @@index([name])
@@ -216,6 +240,7 @@ model Location {
   type        String  @default("warehouse") // warehouse, store, etc.
   address     String?
   description String?
+  managerId   String?
 
   // Audit fields
   createdAt DateTime  @default(now())
@@ -227,8 +252,12 @@ model Location {
   version   Int       @default(1)
 
   // Relations
+  manager                       User?               @relation("LocationManager", fields: [managerId], references: [id])
   inventoryMovementsOrigin      InventoryMovement[] @relation("OriginLocation")
   inventoryMovementsDestination InventoryMovement[] @relation("DestinationLocation")
+  purchaseOrders                PurchaseOrder[]
+  salesOrders                   SalesOrder[]
+  lots                          Lot[]
   userCreatedBy                 User?               @relation("LocationCreatedBy", fields: [createdBy], references: [id])
   userUpdatedBy                 User?               @relation("LocationUpdatedBy", fields: [updatedBy], references: [id])
   userDeletedBy                 User?               @relation("LocationDeletedBy", fields: [deletedBy], references: [id])
@@ -241,36 +270,311 @@ model Location {
 }
 
 // ============================================
+// Customer Entity
+// ============================================
+model Customer {
+  id      String  @id @default(uuid())
+  code    String  @unique
+  name    String
+  email   String?
+  phone   String?
+  address String?
+  taxId   String?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  salesOrders   SalesOrder[]
+  userCreatedBy User? @relation("CustomerCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy User? @relation("CustomerUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy User? @relation("CustomerDeletedBy", fields: [deletedBy], references: [id])
+
+  @@index([code])
+  @@index([name])
+  @@index([deletedAt])
+  @@map("customers")
+}
+
+// ============================================
+// Movement Enums
+// ============================================
+enum MovementSubType {
+  PURCHASE
+  POSITIVE_ADJUSTMENT
+  PRODUCTION
+  RETURN
+  SALE
+  NEGATIVE_ADJUSTMENT
+  DAMAGE
+  INTERNAL_CONSUMPTION
+}
+
+enum AdjustmentReason {
+  PHYSICAL_COUNT
+  CORRECTION
+  EXPIRATION
+  INITIAL_LOAD
+  THEFT
+  ADMINISTRATIVE_ERROR
+  OTHER
+}
+
+// ============================================
 // InventoryMovement Entity
 // ============================================
 model InventoryMovement {
   id                String   @id @default(uuid())
   productId         String
   type              String // "IN", "OUT", "TRANSFER", "ADJUSTMENT"
+  subType           MovementSubType?
   quantity          Int
   originLocationId  String?
   destLocationId    String?
   referenceDocument String?
   notes             String?
   unitPrice         Decimal? @db.Decimal(10, 2)
+  reason            AdjustmentReason?
 
   // Audit fields (only creation - movements are immutable)
   createdAt DateTime @default(now())
   createdBy String?
   version   Int      @default(1)
 
+  lotId            String?
+
   // Relations
   product          Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
   originLocation   Location? @relation("OriginLocation", fields: [originLocationId], references: [id], onDelete: Restrict)
   destLocation     Location? @relation("DestinationLocation", fields: [destLocationId], references: [id], onDelete: Restrict)
   userCreatedBy    User?     @relation("InventoryMovementCreatedBy", fields: [createdBy], references: [id])
+  lot              Lot?      @relation(fields: [lotId], references: [id])
 
   @@index([productId])
   @@index([type])
   @@index([originLocationId])
   @@index([destLocationId])
   @@index([createdAt])
+  @@index([lotId])
   @@map("inventory_movements")
+}
+
+// ============================================
+// Purchase Order Enums & Models
+// ============================================
+enum PurchaseOrderStatus {
+  DRAFT
+  PENDING
+  IN_TRANSIT
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum LotCondition {
+  GOOD
+  DAMAGED
+  EXPIRED
+}
+
+model PurchaseOrder {
+  id           String              @id @default(uuid())
+  orderNumber  String              @unique
+  supplierId   String
+  status       PurchaseOrderStatus @default(DRAFT)
+  expectedDate DateTime?
+  receivedDate DateTime?
+  notes        String?
+  locationId   String
+  totalAmount  Decimal?            @db.Decimal(12, 2)
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  supplier      Supplier               @relation(fields: [supplierId], references: [id])
+  location      Location               @relation(fields: [locationId], references: [id])
+  items         PurchaseOrderItem[]
+  receipts      PurchaseOrderReceipt[]
+  userCreatedBy User?                  @relation("PurchaseOrderCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy User?               @relation("PurchaseOrderUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy User?               @relation("PurchaseOrderDeletedBy", fields: [deletedBy], references: [id])
+
+  @@index([orderNumber])
+  @@index([supplierId])
+  @@index([status])
+  @@index([locationId])
+  @@index([deletedAt])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String  @id @default(uuid())
+  purchaseOrderId String
+  productId       String
+  quantity        Int
+  unitPrice       Decimal @db.Decimal(10, 2)
+  receivedQty     Int     @default(0)
+
+  // Relations
+  purchaseOrder PurchaseOrder             @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product                   @relation(fields: [productId], references: [id])
+  receiptItems  PurchaseOrderReceiptItem[]
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@map("purchase_order_items")
+}
+
+// ============================================
+// Sales Order Enums & Models
+// ============================================
+enum SalesOrderStatus {
+  PENDING
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model SalesOrder {
+  id            String           @id @default(uuid())
+  orderNumber   String           @unique
+  customerId    String
+  status        SalesOrderStatus @default(PENDING)
+  shippedDate   DateTime?
+  deliveredDate DateTime?
+  notes         String?
+  locationId    String
+  totalAmount   Decimal?         @db.Decimal(12, 2)
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  customer      Customer         @relation(fields: [customerId], references: [id])
+  location      Location         @relation(fields: [locationId], references: [id])
+  items         SalesOrderItem[]
+  userCreatedBy User?            @relation("SalesOrderCreatedBy", fields: [createdBy], references: [id])
+  userUpdatedBy User?            @relation("SalesOrderUpdatedBy", fields: [updatedBy], references: [id])
+  userDeletedBy User?            @relation("SalesOrderDeletedBy", fields: [deletedBy], references: [id])
+
+  @@index([orderNumber])
+  @@index([customerId])
+  @@index([status])
+  @@index([locationId])
+  @@index([deletedAt])
+  @@map("sales_orders")
+}
+
+model SalesOrderItem {
+  id           String  @id @default(uuid())
+  salesOrderId String
+  productId    String
+  quantity     Int
+  unitPrice    Decimal @db.Decimal(10, 2)
+  reservedQty  Int     @default(0)
+
+  // Relations
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id])
+
+  @@index([salesOrderId])
+  @@index([productId])
+  @@map("sales_order_items")
+}
+
+// ============================================
+// Lot Entity (Product traceability)
+// ============================================
+model Lot {
+  id                String       @id @default(uuid())
+  lotNumber         String
+  productId         String
+  locationId        String
+  quantity          Int          @default(0)
+  condition         LotCondition @default(GOOD)
+  expirationDate    DateTime?
+  manufacturingDate DateTime?
+  notes             String?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+  version   Int       @default(1)
+
+  // Relations
+  product            Product             @relation(fields: [productId], references: [id])
+  location           Location            @relation(fields: [locationId], references: [id])
+  inventoryMovements InventoryMovement[]
+
+  @@unique([lotNumber, productId])
+  @@index([productId])
+  @@index([locationId])
+  @@index([condition])
+  @@index([expirationDate])
+  @@index([deletedAt])
+  @@map("lots")
+}
+
+// ============================================
+// Purchase Order Receipt (Partial reception)
+// ============================================
+model PurchaseOrderReceipt {
+  id              String   @id @default(uuid())
+  purchaseOrderId String
+  receivedDate    DateTime @default(now())
+  receivedBy      String?
+  notes           String?
+
+  // Relations
+  purchaseOrder PurchaseOrder             @relation(fields: [purchaseOrderId], references: [id])
+  items         PurchaseOrderReceiptItem[]
+
+  @@index([purchaseOrderId])
+  @@map("purchase_order_receipts")
+}
+
+model PurchaseOrderReceiptItem {
+  id                  String       @id @default(uuid())
+  receiptId           String
+  purchaseOrderItemId String
+  receivedQty         Int
+  lotNumber           String
+  condition           LotCondition @default(GOOD)
+  expirationDate      DateTime?
+  manufacturingDate   DateTime?
+  notes               String?
+
+  // Relations
+  receipt           PurchaseOrderReceipt @relation(fields: [receiptId], references: [id])
+  purchaseOrderItem PurchaseOrderItem    @relation(fields: [purchaseOrderItemId], references: [id])
+
+  @@index([receiptId])
+  @@index([purchaseOrderItemId])
+  @@map("purchase_order_receipt_items")
 }
 
 // ============================================
@@ -292,4 +596,3 @@ model RefreshToken {
   @@index([expiresAt])
   @@map("refresh_tokens")
 }
-

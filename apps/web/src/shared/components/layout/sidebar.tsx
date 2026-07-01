@@ -3,6 +3,23 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/modules/auth/context/auth-context';
+import {
+  LayoutDashboard,
+  Package,
+  ArrowLeftRight,
+  MapPin,
+  Factory,
+  Users,
+  ClipboardList,
+  ShoppingCart,
+  BarChart3,
+  UserCog,
+  Settings,
+  LogOut,
+  Layers,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface SidebarProps {
   children?: ReactNode;
@@ -11,53 +28,26 @@ interface SidebarProps {
 interface NavItem {
   href: string;
   label: string;
-  icon: ReactNode;
+  icon: LucideIcon;
   permission?: string;
 }
 
 export function Sidebar({ children }: SidebarProps) {
   const pathname = usePathname();
+  const { hasPermission } = useAuth();
 
   const navItems: NavItem[] = [
-    {
-      href: '/dashboard',
-      label: 'Dashboard',
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      ),
-    },
-    {
-      href: '/dashboard/stock',
-      label: 'Gestion de Stock',
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      ),
-      permission: 'product.read',
-    },
-    {
-      href: '/dashboard/inventory',
-      label: 'Movimientos',
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-        </svg>
-      ),
-      permission: 'inventory.read',
-    },
-    {
-      href: '/dashboard/users',
-      label: 'Usuarios',
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      ),
-      permission: 'user.manage',
-    },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard/stock', label: 'Productos', icon: Package, permission: 'product.read' },
+    { href: '/dashboard/inventory', label: 'Movimientos', icon: ArrowLeftRight, permission: 'inventory.read' },
+    { href: '/dashboard/locations', label: 'Ubicaciones', icon: MapPin, permission: 'location.read' },
+    { href: '/dashboard/suppliers', label: 'Proveedores', icon: Factory, permission: 'supplier.read' },
+    { href: '/dashboard/customers', label: 'Clientes', icon: Users, permission: 'customer.read' },
+    { href: '/dashboard/purchase-orders', label: 'Órdenes de Compra', icon: ClipboardList, permission: 'purchase-order.read' },
+    { href: '/dashboard/sales-orders', label: 'Órdenes de Venta', icon: ShoppingCart, permission: 'sales-order.read' },
+    { href: '/dashboard/lots', label: 'Lotes', icon: Layers, permission: 'inventory.read' },
+    { href: '/dashboard/reports', label: 'Reportes', icon: BarChart3, permission: 'report.read' },
+    { href: '/dashboard/users', label: 'Usuarios', icon: UserCog, permission: 'user.manage' },
   ];
 
   function isActive(href: string) {
@@ -92,7 +82,7 @@ export function Sidebar({ children }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-        {navItems.map((item) => (
+        {navItems.filter((item) => !item.permission || hasPermission(item.permission)).map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -107,14 +97,12 @@ export function Sidebar({ children }: SidebarProps) {
               }
             `}
           >
-            <span
+            <item.icon
               className={`
-                transition-colors duration-200
+                w-5 h-5 transition-colors duration-200
                 ${isActive(item.href) ? 'text-primary-600' : 'text-surface-400'}
               `}
-            >
-              {item.icon}
-            </span>
+            />
             {item.label}
           </Link>
         ))}
@@ -161,10 +149,7 @@ export function SidebarUser({ user, onLogout }: SidebarUserProps) {
           "
           aria-label="Settings"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          <Settings className="w-5 h-5" />
         </Link>
       </div>
 
@@ -180,9 +165,7 @@ export function SidebarUser({ user, onLogout }: SidebarUserProps) {
           transition-all duration-200
         "
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
+        <LogOut className="w-4 h-4" />
         Logout
       </button>
     </div>

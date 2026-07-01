@@ -1,139 +1,132 @@
 'use client';
 
-import { useProducts } from '@/modules/products/hooks/use-products';
-import { useLocations } from '@/modules/locations/hooks/use-locations';
-import { useInventoryMovements } from '@/modules/inventory/hooks/use-inventory';
+import { useInventorySummary, downloadExcelReport } from '@/modules/reports/hooks/use-reports';
 import { Card, CardHeader, CardBody, CardTitle } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { StockChart } from '@/modules/reports/components/stock-chart';
+import { StockValueChart } from '@/modules/reports/components/stock-value-chart';
 
 export default function ReportsPage() {
-  const { data: products } = useProducts();
-  const { data: locations } = useLocations();
-  const { data: movements } = useInventoryMovements();
-
-  const productsList = products?.data || [];
-  const locationsList = locations || [];
-  const movementsList = movements || [];
-
-  const stats = {
-    totalProducts: productsList.length,
-    totalLocations: locationsList.length,
-    totalMovements: movementsList.length,
-    movementsIn: movementsList.filter(m => m.type === 'IN').length,
-    movementsOut: movementsList.filter(m => m.type === 'OUT').length,
-    movementsTransfer: movementsList.filter(m => m.type === 'TRANSFER').length,
-  };
+  const { data: summary } = useInventorySummary();
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Overview of your inventory system
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-surface-900">Reportes y Analitica</h1>
+          <p className="mt-1 text-sm text-surface-500">
+            Vision general del sistema de inventario
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="success"
+            size="sm"
+            onClick={() => downloadExcelReport('inventory')}
+          >
+            Exportar Excel
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => downloadExcelReport('movements')}
+          >
+            Exportar Movimientos
+          </Button>
+        </div>
       </div>
 
+      {/* Summary KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+        <Card className="bg-white/70 backdrop-blur-sm">
           <CardBody className="text-center py-8">
-            <div className="text-4xl font-bold text-primary-600">{stats.totalProducts}</div>
-            <div className="text-sm font-medium text-gray-600 mt-2">Total Products</div>
+            <div className="text-4xl font-bold text-primary-600">
+              {summary?.totalProducts || 0}
+            </div>
+            <div className="text-sm font-medium text-surface-600 mt-2">Total Productos</div>
           </CardBody>
         </Card>
 
-        <Card>
+        <Card className="bg-white/70 backdrop-blur-sm">
           <CardBody className="text-center py-8">
-            <div className="text-4xl font-bold text-blue-600">{stats.totalLocations}</div>
-            <div className="text-sm font-medium text-gray-600 mt-2">Total Locations</div>
+            <div className="text-4xl font-bold text-success-600">
+              {summary?.lowStockCount || 0}
+            </div>
+            <div className="text-sm font-medium text-surface-600 mt-2">Stock Bajo</div>
           </CardBody>
         </Card>
 
-        <Card>
+        <Card className="bg-white/70 backdrop-blur-sm">
           <CardBody className="text-center py-8">
-            <div className="text-4xl font-bold text-purple-600">{stats.totalMovements}</div>
-            <div className="text-sm font-medium text-gray-600 mt-2">Total Movements</div>
+            <div className="text-4xl font-bold text-info-600">
+              ${(summary?.totalStockValue || 0).toLocaleString()}
+            </div>
+            <div className="text-sm font-medium text-surface-600 mt-2">Valor Total Stock</div>
           </CardBody>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="bg-green-50">
-            <CardTitle className="text-green-800">Incoming Movements</CardTitle>
-          </CardHeader>
-          <CardBody className="text-center py-6">
-            <div className="text-3xl font-bold text-green-600">{stats.movementsIn}</div>
-            <div className="text-sm text-gray-600 mt-1">IN operations</div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-white/70 backdrop-blur-sm">
+          <CardBody className="p-2">
+            <StockChart />
           </CardBody>
         </Card>
 
-        <Card>
-          <CardHeader className="bg-red-50">
-            <CardTitle className="text-red-800">Outgoing Movements</CardTitle>
-          </CardHeader>
-          <CardBody className="text-center py-6">
-            <div className="text-3xl font-bold text-red-600">{stats.movementsOut}</div>
-            <div className="text-sm text-gray-600 mt-1">OUT operations</div>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader className="bg-blue-50">
-            <CardTitle className="text-blue-800">Transfers</CardTitle>
-          </CardHeader>
-          <CardBody className="text-center py-6">
-            <div className="text-3xl font-bold text-blue-600">{stats.movementsTransfer}</div>
-            <div className="text-sm text-gray-600 mt-1">TRANSFER operations</div>
+        <Card className="bg-white/70 backdrop-blur-sm">
+          <CardBody className="p-2">
+            <StockValueChart />
           </CardBody>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardBody>
-          {movements && movements.length > 0 ? (
-            <div className="space-y-3">
-              {movements.slice(0, 5).map(movement => (
-                <div
-                  key={movement.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        movement.type === 'IN'
-                          ? 'bg-green-100 text-green-800'
-                          : movement.type === 'OUT'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {movement.type}
-                    </span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {movement.quantity} units
-                    </span>
-                    {movement.referenceDocument && (
-                      <span className="text-xs text-gray-500">
-                        Ref: {movement.referenceDocument}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(movement.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
+      {/* Product Detail Table */}
+      {summary?.products && summary.products.length > 0 && (
+        <Card className="bg-white/70 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Detalle de Productos</CardTitle>
+          </CardHeader>
+          <CardBody className="p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-surface-200">
+                <thead className="bg-surface-50/50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider">SKU</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider">Producto</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-surface-500 uppercase tracking-wider">Stock</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-surface-500 uppercase tracking-wider">Umbral</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-surface-500 uppercase tracking-wider">Valor</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-surface-500 uppercase tracking-wider">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-200">
+                  {summary.products.map(product => (
+                    <tr key={product.id} className="hover:bg-surface-50/50 transition-colors">
+                      <td className="px-6 py-3 text-sm font-mono text-surface-700">{product.sku}</td>
+                      <td className="px-6 py-3 text-sm font-medium text-surface-900">{product.name}</td>
+                      <td className="px-6 py-3 text-sm text-right font-semibold text-surface-900">
+                        {product.totalStock} {product.unit}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-right text-surface-500">{product.stockThreshold}</td>
+                      <td className="px-6 py-3 text-sm text-right text-surface-900">${product.stockValue.toLocaleString()}</td>
+                      <td className="px-6 py-3 text-center">
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                          product.isLowStock
+                            ? 'bg-danger-100 text-danger-700'
+                            : 'bg-success-100 text-success-700'
+                        }`}>
+                          {product.isLowStock ? 'Bajo' : 'OK'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No movements recorded yet
-            </div>
-          )}
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 }
-

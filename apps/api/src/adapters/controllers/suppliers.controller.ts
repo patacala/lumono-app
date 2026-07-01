@@ -11,6 +11,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { ISupplierRepository } from '@/domain/ports/repositories/supplier.repository';
@@ -66,6 +67,8 @@ class UpdateSupplierDto {
   version: number;
 }
 
+@ApiTags('Suppliers')
+@ApiBearerAuth()
 @Controller('suppliers')
 export class SuppliersController {
   constructor(
