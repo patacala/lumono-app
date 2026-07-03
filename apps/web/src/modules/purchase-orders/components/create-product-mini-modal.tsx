@@ -44,7 +44,7 @@ export function CreateProductMiniModal({
 
     try {
       const product = await createMutation.mutateAsync({
-        sku,
+        sku: sku.trim() || undefined,
         name,
         unit,
         unitPrice,
@@ -78,8 +78,8 @@ export function CreateProductMiniModal({
           label="SKU"
           value={sku}
           onChange={(e) => setSku(e.target.value)}
-          required
-          placeholder="Ej: PROD-003"
+          placeholder="Se genera automaticamente"
+          helperText="Dejar vacio para generar automaticamente"
         />
         <Input
           label="Nombre"
@@ -106,8 +106,8 @@ export function CreateProductMiniModal({
         />
         {supplierName && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-            <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-600 border border-gray-200">
+            <label className="block text-sm font-medium text-surface-800 mb-1">Proveedor</label>
+            <div className="px-3 py-2 bg-surface-200 rounded-lg text-sm text-surface-600 border border-[var(--border)]">
               {supplierName}
             </div>
           </div>

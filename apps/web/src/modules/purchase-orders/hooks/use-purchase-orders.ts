@@ -84,7 +84,7 @@ export interface CreatePurchaseOrderDto {
 export interface ReceiveItemDto {
   purchaseOrderItemId: string;
   receivedQty: number;
-  lotNumber: string;
+  lotNumber?: string;
   condition: LotCondition;
   expirationDate?: string;
   manufacturingDate?: string;

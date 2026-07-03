@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 interface CardProps {
   children: ReactNode;
   className?: string;
-  variant?: 'default' | 'elevated' | 'bordered';
+  variant?: 'default' | 'elevated' | 'bordered' | 'stat';
   hover?: boolean;
   animate?: boolean;
 }
@@ -16,22 +16,14 @@ export function Card({
   animate = false,
 }: CardProps) {
   const variantStyles = {
-    default: `
-      glass-card rounded-2xl
-      shadow-glass
-    `,
-    elevated: `
-      bg-white/90 backdrop-blur-lg rounded-2xl
-      shadow-elevated border border-white/20
-    `,
-    bordered: `
-      bg-white/80 backdrop-blur-sm rounded-2xl
-      border border-surface-200/60 shadow-soft
-    `,
+    default: 'bg-[var(--surface)] border border-[var(--border)] rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)]',
+    elevated: 'bg-[var(--surface-2)] border border-[var(--border)] rounded-[12px] shadow-[0_4px_12px_rgba(0,0,0,0.4)]',
+    bordered: 'bg-[var(--surface)] border border-[var(--border)] rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)]',
+    stat: 'bg-[var(--surface)] border border-[var(--border)] rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)] overflow-hidden',
   };
 
   const hoverStyles = hover
-    ? 'hover:shadow-glass-lg hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer'
+    ? 'hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:border-[var(--border-hover)] hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer'
     : 'transition-all duration-300 ease-out';
 
   const animateStyles = animate ? 'animate-fade-in-up' : '';
@@ -52,9 +44,8 @@ export function CardHeader({ children, className = '' }: CardSectionProps) {
   return (
     <div
       className={`
-        px-6 py-5 border-b border-surface-200/50
-        bg-gradient-to-r from-surface-50/50 to-transparent
-        rounded-t-2xl
+        px-[18px] py-4 border-b border-[var(--border)]
+        rounded-t-[12px]
         ${className}
       `}
     >
@@ -64,26 +55,25 @@ export function CardHeader({ children, className = '' }: CardSectionProps) {
 }
 
 export function CardBody({ children, className = '' }: CardSectionProps) {
-  return <div className={`px-6 py-5 ${className}`}>{children}</div>;
+  return <div className={`px-[18px] py-[18px] ${className}`}>{children}</div>;
 }
 
 export function CardTitle({ children, className = '' }: CardSectionProps) {
   return (
-    <h3 className={`text-lg font-semibold text-surface-900 ${className}`}>{children}</h3>
+    <h3 className={`text-[13px] font-semibold text-[var(--fg)] ${className}`}>{children}</h3>
   );
 }
 
 export function CardDescription({ children, className = '' }: CardSectionProps) {
-  return <p className={`text-sm text-surface-500 mt-1 ${className}`}>{children}</p>;
+  return <p className={`text-sm text-[var(--muted)] mt-1 ${className}`}>{children}</p>;
 }
 
 export function CardFooter({ children, className = '' }: CardSectionProps) {
   return (
     <div
       className={`
-        px-6 py-4 border-t border-surface-200/50
-        bg-gradient-to-r from-surface-50/30 to-transparent
-        rounded-b-2xl
+        px-[18px] py-4 border-t border-[var(--border)]
+        rounded-b-[12px]
         ${className}
       `}
     >

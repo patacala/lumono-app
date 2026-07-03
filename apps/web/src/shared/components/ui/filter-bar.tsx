@@ -17,8 +17,8 @@ export function FilterBar({ filters, onRemoveFilter, onClearAll }: FilterBarProp
     <div
       className="
         flex items-center gap-3 flex-wrap
-        px-4 py-3 glass rounded-xl
-        border border-surface-200/40
+        px-4 py-3 rounded-lg
+        bg-[var(--surface)] border border-[var(--border)]
       "
     >
       <span className="text-sm font-medium text-surface-600">Active filters:</span>
@@ -35,11 +35,9 @@ export function FilterBar({ filters, onRemoveFilter, onClearAll }: FilterBarProp
       <button
         onClick={onClearAll}
         className="
-          text-sm text-primary-600 hover:text-primary-700
+          text-sm text-[var(--accent)] hover:text-[var(--accent-hover)]
           font-medium ml-2
-          relative after:absolute after:bottom-0 after:left-0 after:right-0
-          after:h-px after:bg-primary-500 after:scale-x-0
-          hover:after:scale-x-100 after:transition-transform after:duration-200
+          transition-colors duration-200
         "
       >
         Clear all
@@ -62,22 +60,21 @@ function FilterChip({
       className="
         inline-flex items-center gap-2
         px-3 py-1.5
-        bg-white/80 backdrop-blur-sm
-        border border-primary-200/40 rounded-full
-        shadow-sm
+        bg-[var(--surface-2)]
+        border border-[var(--border)] rounded-full
         text-sm
         transition-all duration-200
-        hover:shadow hover:border-primary-300/50
+        hover:border-[var(--border-hover)]
       "
     >
-      <span className="text-surface-500">{label}:</span>
+      <span className="text-surface-600">{label}:</span>
       <span className="font-medium text-surface-800">{value}</span>
       <button
         onClick={onRemove}
         className="
           p-0.5 rounded-full
-          text-surface-400 hover:text-danger-500
-          hover:bg-danger-50
+          text-surface-500 hover:text-surface-900
+          hover:bg-surface-300
           transition-all duration-200
         "
       >
@@ -99,19 +96,20 @@ interface FilterDropdownProps {
 export function FilterDropdown({ label, options, value, onChange }: FilterDropdownProps) {
   return (
     <div className="flex-1 min-w-[200px]">
-      <label className="block text-sm font-medium text-surface-700 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-surface-800 mb-2">{label}</label>
       <div className="relative group">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="
             block w-full px-4 py-2.5 text-sm
-            bg-white/70 backdrop-blur-sm
-            border border-surface-200/60 rounded-xl
+            bg-[var(--surface)]
+            border border-[var(--border)] rounded-lg
+            text-[var(--fg)]
             transition-all duration-200 ease-out
-            focus:bg-white/90 focus:border-primary-300
-            focus:ring-2 focus:ring-primary-100 focus:ring-offset-0
-            hover:border-surface-300
+            focus:border-[var(--accent)]
+            focus:ring-1 focus:ring-[var(--accent)] focus:ring-offset-0
+            hover:border-[var(--border-hover)]
             appearance-none cursor-pointer
           "
         >
@@ -121,7 +119,7 @@ export function FilterDropdown({ label, options, value, onChange }: FilterDropdo
             </option>
           ))}
         </select>
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-surface-400 group-focus-within:text-primary-500 transition-colors duration-200">
+        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-surface-500 group-focus-within:text-[var(--accent)] transition-colors duration-200">
           <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
@@ -134,4 +132,3 @@ export function FilterDropdown({ label, options, value, onChange }: FilterDropdo
     </div>
   );
 }
-

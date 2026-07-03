@@ -22,7 +22,7 @@ import { IProductRepository } from '@/domain/ports/repositories/product.reposito
 import { calculatePagination, createPaginatedResponse } from '@/shared/dto/pagination.dto';
 
 class CreateProductDto {
-  @IsString() @IsNotEmpty() sku: string;
+  @IsString() @IsOptional() sku?: string;
   @IsString() @IsNotEmpty() name: string;
   @IsString() @IsOptional() description?: string;
   @IsNumber() @Min(0) unitPrice: number;

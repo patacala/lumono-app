@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Modal, ModalFooter } from '@/shared/components/ui/modal';
 import { Input } from '@/shared/components/ui/input';
 import { Select } from '@/shared/components/ui/select';
+import { Combobox } from '@/shared/components/ui/combobox';
 import { Button } from '@/shared/components/ui/button';
 import { useCreatePurchaseOrder } from '../hooks/use-purchase-orders';
 import { useSuppliers } from '@/modules/suppliers/hooks/use-suppliers';
@@ -86,7 +87,9 @@ export function PurchaseOrderModal({ isOpen, onClose }: PurchaseOrderModalProps)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const validItems = items.filter((item) => item.productId && item.quantity > 0);
+    const validItems = items
+      .filter((item) => item.productId && item.quantity > 0)
+      .map(({ productId, quantity, unitPrice }) => ({ productId, quantity, unitPrice }));
     if (validItems.length === 0) return;
 
     await createMutation.mutateAsync({
@@ -116,10 +119,7 @@ export function PurchaseOrderModal({ isOpen, onClose }: PurchaseOrderModalProps)
     ...locations.map((l) => ({ value: l.id, label: l.name })),
   ];
 
-  const productOptions = [
-    { value: '', label: 'Seleccionar producto...' },
-    ...products.map((p) => ({ value: p.id, label: `${p.sku} - ${p.name}` })),
-  ];
+  const productOptions = products.map((p) => ({ value: p.id, label: `${p.sku} - ${p.name}` }));
 
   return (
     <>
@@ -155,82 +155,95 @@ export function PurchaseOrderModal({ isOpen, onClose }: PurchaseOrderModalProps)
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <h3 className="text-sm font-semibold text-gray-700">Items</h3>
+              <h3 className="text-sm font-semibold text-surface-700">Items</h3>
               <Button type="button" variant="ghost" size="sm" onClick={addItem}>
                 + Agregar item
               </Button>
             </div>
 
-            <div className="space-y-2">
-              {items.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5">
-                    <div className="flex gap-1 items-end">
-                      <div className="flex-1">
-                        <Select
-                          label={index === 0 ? 'Producto' : undefined}
+            <div className="rounded-lg border border-[var(--border)]">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[var(--surface-2)]">
+                    <th className="text-left text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider px-3 py-2">Producto</th>
+                    <th className="text-left text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider px-3 py-2 w-28">Cant.</th>
+                    <th className="text-left text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider px-3 py-2 w-32">Precio</th>
+                    <th className="text-right text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider px-3 py-2 w-24">Subtotal</th>
+                    <th className="w-10 px-2 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {items.map((item, index) => (
+                    <tr key={index} className="group">
+                      <td className="px-3 py-2 align-top">
+                        <Combobox
                           options={productOptions}
                           value={item.productId}
-                          onChange={(e) => updateItem(index, 'productId', e.target.value)}
+                          onChange={(val) => updateItem(index, 'productId', val)}
+                          placeholder="Buscar producto..."
+                          onCreate={() => openMiniModal(index)}
+                          createLabel="Crear producto"
                           required
                         />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => openMiniModal(index)}
-                        className="mb-0.5 p-2 rounded-lg text-primary-600 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                        title="Crear producto nuevo"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <Input
-                      label={index === 0 ? 'Cantidad' : undefined}
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                      required
-                    />
-                    {item.unit && (
-                      <span className="text-xs text-gray-500">{item.unit}</span>
-                    )}
-                  </div>
-                  <div className="col-span-3">
-                    <Input
-                      label={index === 0 ? 'Precio unit.' : undefined}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.unitPrice}
-                      onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                      required
-                    />
-                  </div>
-                  <div className="col-span-1 text-right text-sm font-medium text-gray-700 pb-2">
-                    ${(item.quantity * item.unitPrice).toFixed(2)}
-                  </div>
-                  <div className="col-span-1 pb-2">
-                    {items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeItem(index)}
-                        className="text-danger-500 hover:text-danger-700 text-sm"
-                      >
-                        X
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-right text-sm font-bold text-gray-900 pt-2 border-t">
-              Total: ${getTotal().toFixed(2)}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                            required
+                            className="w-16 px-2 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--fg)] focus:border-[oklch(68%_0.19_55_/_0.45)] focus:ring-1 focus:ring-[oklch(68%_0.19_55_/_0.45)] focus:ring-offset-0 hover:border-[var(--border-hover)] transition-all duration-200"
+                          />
+                          {item.unit && (
+                            <span className="text-xs text-[var(--muted)] font-medium shrink-0">{item.unit}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <div className="flex items-center gap-0.5">
+                          <span className="text-sm text-[var(--muted)]">$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.unitPrice}
+                            onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                            required
+                            className="w-full px-2 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--fg)] focus:border-[oklch(68%_0.19_55_/_0.45)] focus:ring-1 focus:ring-[oklch(68%_0.19_55_/_0.45)] focus:ring-offset-0 hover:border-[var(--border-hover)] transition-all duration-200"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 align-top text-right">
+                        <span className="text-sm font-semibold text-[var(--fg)] leading-[40px]">
+                          ${(item.quantity * item.unitPrice).toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 align-top">
+                        {items.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            className="mt-2 p-1 rounded-md text-[var(--muted)] opacity-0 group-hover:opacity-100 hover:text-danger-500 hover:bg-danger-500/10 transition-all"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-[var(--surface-2)]">
+                    <td colSpan={3} className="px-3 py-2.5 text-right text-sm font-semibold text-[var(--fg-secondary)]">Total</td>
+                    <td className="px-3 py-2.5 text-right text-sm font-bold text-[var(--fg)]">${getTotal().toFixed(2)}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </div>
 

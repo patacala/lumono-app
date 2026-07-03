@@ -28,13 +28,13 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-surface-50 to-info-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-info-600 flex items-center justify-center shadow-lg">
-              <span className="text-2xl font-bold text-white">L</span>
+            <div className="w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center">
+              <span className="text-2xl font-bold text-[#111]">L</span>
             </div>
             <span className="text-3xl font-bold text-surface-900">Lumono</span>
           </div>
@@ -42,15 +42,15 @@ export function LoginForm() {
             Smart Inventory Management
           </h1>
           <p className="text-surface-600">
-            Inicia sesión para continuar
+            Inicia sesion para continuar
           </p>
         </div>
 
-        <Card className="shadow-xl border-0">
+        <Card>
           <CardBody className="p-8">
             <form className="space-y-5" onSubmit={handleSubmit}>
               {error && (
-                <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                <div className="bg-[var(--status-critical)] border border-[var(--border)] text-[#cc6060] px-4 py-3 rounded-lg text-sm flex items-start gap-3">
                   <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
@@ -73,7 +73,7 @@ export function LoginForm() {
 
               <div>
                 <Input
-                  label="Contraseña"
+                  label="Contrasena"
                   id="password"
                   type="password"
                   required
@@ -89,28 +89,28 @@ export function LoginForm() {
                 isLoading={isLoading}
                 className="w-full h-12 text-base font-semibold"
               >
-                {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                {isLoading ? 'Iniciando sesion...' : 'Iniciar Sesion'}
               </Button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-surface-200">
-              <div className="bg-gradient-to-br from-primary-50 to-info-50 rounded-xl p-4 border border-primary-100">
+            <div className="mt-6 pt-6 border-t border-[var(--border)]">
+              <div className="bg-[var(--surface-2)] rounded-xl p-4 border border-[var(--border)]">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 rounded-lg bg-surface-300 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-surface-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-primary-900 mb-2">Credenciales de prueba:</p>
+                    <p className="text-xs font-medium text-surface-900 mb-2">Credenciales de prueba:</p>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-primary-700 font-medium">Email:</span>
-                        <code className="text-xs font-mono text-primary-900 bg-white px-2 py-0.5 rounded">admin@lumono.com</code>
+                        <span className="text-xs text-surface-700 font-medium">Email:</span>
+                        <code className="text-xs font-mono text-surface-900 bg-surface-300 px-2 py-0.5 rounded">admin@lumono.com</code>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-primary-700 font-medium">Password:</span>
-                        <code className="text-xs font-mono text-primary-900 bg-white px-2 py-0.5 rounded">admin123</code>
+                        <span className="text-xs text-surface-700 font-medium">Password:</span>
+                        <code className="text-xs font-mono text-surface-900 bg-surface-300 px-2 py-0.5 rounded">admin123</code>
                       </div>
                     </div>
                   </div>
@@ -120,7 +120,7 @@ export function LoginForm() {
           </CardBody>
         </Card>
 
-        <p className="text-center text-sm text-surface-500 mt-8">
+        <p className="text-center text-sm text-surface-600 mt-8">
           © 2025 Lumono. Todos los derechos reservados.
         </p>
       </div>

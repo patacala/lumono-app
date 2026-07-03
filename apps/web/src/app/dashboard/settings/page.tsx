@@ -52,8 +52,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-3xl font-bold text-surface-900">Settings</h1>
+        <p className="mt-1 text-sm text-surface-600">
           Manage your account settings and preferences
         </p>
       </div>
@@ -71,11 +71,11 @@ export default function SettingsPage() {
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                       activeSection === section.id
-                        ? 'bg-primary-50 text-primary-700 shadow-sm'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-[var(--accent-dim)] text-[var(--accent)]'
+                        : 'text-surface-700 hover:bg-surface-300 hover:text-surface-900'
                     }`}
                   >
-                    <span className={activeSection === section.id ? 'text-primary-600' : 'text-gray-500'}>
+                    <span className={activeSection === section.id ? 'text-[var(--accent)]' : 'text-surface-600'}>
                       <Icon />
                     </span>
                     {section.label}
@@ -95,10 +95,10 @@ export default function SettingsPage() {
               </CardHeader>
               <CardBody className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-surface-700 mb-2">
                     User name
                   </label>
-                  <p className="text-sm text-gray-500 mb-2">
+                  <p className="text-sm text-surface-600 mb-2">
                     This is a display name and is not used for authentication
                   </p>
                   <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export default function SettingsPage() {
                       type="text"
                       value={user?.name || ''}
                       disabled
-                      className="flex-1 px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                      className="flex-1 px-4 py-2.5 text-sm border border-[var(--border)] rounded-lg bg-surface-200 cursor-not-allowed"
                     />
                     <Button variant="ghost" size="sm" type="button">
                       Edit
@@ -115,15 +115,15 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-surface-700 mb-2">
                     Profile image
                   </label>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-surface-600 mb-4">
                     Upload your own image as your avatar
                   </p>
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-info-600 flex items-center justify-center">
-                      <span className="text-white font-bold text-2xl">
+                    <div className="w-16 h-16 rounded-full bg-[var(--accent-dim)] flex items-center justify-center">
+                      <span className="text-[var(--accent)] font-bold text-2xl">
                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                       </span>
                     </div>
@@ -143,14 +143,14 @@ export default function SettingsPage() {
               </CardHeader>
               <CardBody className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-surface-700 mb-2">
                     Email address
                   </label>
-                  <p className="text-sm text-gray-900">{user?.email}</p>
+                  <p className="text-sm text-surface-900">{user?.email}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-surface-700 mb-2">
                     Change password
                   </label>
                   <Button type="button">
@@ -169,17 +169,17 @@ export default function SettingsPage() {
               <CardBody className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">Low stock alerts</p>
-                    <p className="text-sm text-gray-500">Get notified when stock is low</p>
+                    <p className="font-medium text-surface-900">Low stock alerts</p>
+                    <p className="text-sm text-surface-600">Get notified when stock is low</p>
                   </div>
-                  <input type="checkbox" className="w-5 h-5 text-primary-600 rounded" />
+                  <input type="checkbox" className="w-5 h-5 text-[var(--accent)] rounded" />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">New movements</p>
-                    <p className="text-sm text-gray-500">Get notified of new inventory movements</p>
+                    <p className="font-medium text-surface-900">New movements</p>
+                    <p className="text-sm text-surface-600">Get notified of new inventory movements</p>
                   </div>
-                  <input type="checkbox" className="w-5 h-5 text-primary-600 rounded" />
+                  <input type="checkbox" className="w-5 h-5 text-[var(--accent)] rounded" />
                 </div>
               </CardBody>
             </Card>
@@ -192,13 +192,13 @@ export default function SettingsPage() {
               </CardHeader>
               <CardBody>
                 <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="p-4 bg-surface-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">Current Session</p>
-                        <p className="text-sm text-gray-500">Active now</p>
+                        <p className="font-medium text-surface-900">Current Session</p>
+                        <p className="text-sm text-surface-600">Active now</p>
                       </div>
-                      <span className="px-3 py-1 text-xs font-medium bg-success-100 text-success-800 rounded-full">
+                      <span className="px-3 py-1 text-xs font-medium bg-[var(--status-ok)] text-[#5caa80] rounded-full">
                         Active
                       </span>
                     </div>
@@ -215,19 +215,19 @@ export default function SettingsPage() {
               </CardHeader>
               <CardBody className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-surface-700 mb-2">
                     Language
                   </label>
-                  <select className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                  <select className="block w-full px-4 py-2.5 text-sm border border-[var(--border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)]">
                     <option>English</option>
                     <option>Spanish</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-surface-700 mb-2">
                     Timezone
                   </label>
-                  <select className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                  <select className="block w-full px-4 py-2.5 text-sm border border-[var(--border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)]">
                     <option>UTC</option>
                     <option>America/New_York</option>
                   </select>
@@ -240,4 +240,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

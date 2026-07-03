@@ -14,7 +14,7 @@ export default function NewProductPage() {
   const router = useRouter();
   const createProduct = useCreateProduct();
   const { data: suppliers } = useSuppliers();
-  
+
   const [formData, setFormData] = useState({
     sku: '',
     name: '',
@@ -60,7 +60,7 @@ export default function NewProductPage() {
       <div className="mb-6">
         <Link
           href="/dashboard/products"
-          className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
+          className="text-sm text-[var(--accent)] hover:text-[var(--accent)] transition-colors"
         >
           ← Back to Products
         </Link>
@@ -73,7 +73,7 @@ export default function NewProductPage() {
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-lg">
+              <div className="bg-[var(--status-critical)] border border-[var(--border)] text-[#cc6060] px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
@@ -97,14 +97,14 @@ export default function NewProductPage() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-surface-600 mb-1.5">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                className="block w-full px-4 py-2.5 text-sm border border-[var(--border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors"
                 placeholder="Product description..."
               />
             </div>
@@ -159,4 +159,3 @@ export default function NewProductPage() {
     </div>
   );
 }
-

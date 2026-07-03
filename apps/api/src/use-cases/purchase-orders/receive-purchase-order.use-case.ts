@@ -10,7 +10,7 @@ import { NotFoundError, ValidationError } from '@/domain/errors/domain.error';
 export interface ReceiveItemDto {
   purchaseOrderItemId: string;
   receivedQty: number;
-  lotNumber: string;
+  lotNumber?: string;
   condition: LotCondition;
   expirationDate?: Date;
   manufacturingDate?: Date;
@@ -50,6 +50,7 @@ export class ReceivePurchaseOrderUseCase {
       // Build item map for quick lookup
       const itemMap = new Map(order.items?.map((i) => [i.id, i]));
 
+      let autoLotSeq = 1;
       for (const receiveItem of dto.items) {
         const orderItem = itemMap.get(receiveItem.purchaseOrderItemId);
         if (!orderItem) {
@@ -61,6 +62,13 @@ export class ReceivePurchaseOrderUseCase {
           throw new ValidationError(
             `Cannot receive ${receiveItem.receivedQty} of "${orderItem.productName}". Already received ${orderItem.receivedQty} of ${orderItem.quantity} ordered.`,
           );
+        }
+
+        // Auto-generate lot number if not provided
+        if (!receiveItem.lotNumber?.trim()) {
+          const now = new Date();
+          const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+          receiveItem.lotNumber = `LOT-${dateStr}-${String(autoLotSeq++).padStart(3, '0')}`;
         }
 
         // Find or create lot
@@ -118,7 +126,7 @@ export class ReceivePurchaseOrderUseCase {
         items: dto.items.map((i) => ({
           purchaseOrderItemId: i.purchaseOrderItemId,
           receivedQty: i.receivedQty,
-          lotNumber: i.lotNumber,
+          lotNumber: i.lotNumber!,
           condition: i.condition,
           expirationDate: i.expirationDate,
           manufacturingDate: i.manufacturingDate,

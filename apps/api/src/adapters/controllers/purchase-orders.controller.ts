@@ -36,7 +36,7 @@ class UpdateStatusDto {
 class ReceiveItemDto {
   @IsString() @IsNotEmpty() purchaseOrderItemId: string;
   @IsNumber() @Min(1) receivedQty: number;
-  @IsString() @IsNotEmpty() lotNumber: string;
+  @IsString() @IsOptional() lotNumber?: string;
   @IsString() @IsNotEmpty() condition: 'GOOD' | 'DAMAGED' | 'EXPIRED';
   @IsDateString() @IsOptional() expirationDate?: string;
   @IsDateString() @IsOptional() manufacturingDate?: string;

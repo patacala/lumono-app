@@ -11,13 +11,19 @@ export class CreateProductUseCase {
   ) {}
 
   async execute(dto: CreateProductDto): Promise<Product> {
-    const existing = await this.productRepository.findBySku(dto.sku);
+    let sku = dto.sku?.trim();
 
-    if (existing) {
-      throw new ConflictError(`Product with SKU ${dto.sku} already exists`);
+    if (!sku) {
+      const seq = await this.productRepository.getNextSkuSequence();
+      sku = `PROD-${seq.toString().padStart(5, '0')}`;
     }
 
-    return this.productRepository.create(dto);
+    const existing = await this.productRepository.findBySku(sku);
+    if (existing) {
+      throw new ConflictError(`Product with SKU ${sku} already exists`);
+    }
+
+    return this.productRepository.create({ ...dto, sku });
   }
 }
 

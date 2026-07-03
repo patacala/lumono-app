@@ -61,17 +61,20 @@ export function useSalesOrders(params: {
   limit?: number;
   status?: SalesOrderStatus;
   customerId?: string;
+  refetchInterval?: number;
 } = {}) {
+  const { refetchInterval, ...queryParams } = params;
   const searchParams = new URLSearchParams();
-  searchParams.append('page', String(params.page || 1));
-  searchParams.append('limit', String(params.limit || 20));
-  if (params.status) searchParams.append('status', params.status);
-  if (params.customerId) searchParams.append('customerId', params.customerId);
+  searchParams.append('page', String(queryParams.page || 1));
+  searchParams.append('limit', String(queryParams.limit || 20));
+  if (queryParams.status) searchParams.append('status', queryParams.status);
+  if (queryParams.customerId) searchParams.append('customerId', queryParams.customerId);
 
   return useQuery({
-    queryKey: ['sales-orders', params],
+    queryKey: ['sales-orders', queryParams],
     queryFn: () =>
       apiClient.get<PaginatedSalesOrders>(`/sales-orders?${searchParams.toString()}`),
+    refetchInterval,
   });
 }
 

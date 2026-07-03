@@ -39,7 +39,6 @@ export function ProductModal({ isOpen, onClose, product, onSuccess }: ProductMod
     categoryId: '',
     stockThreshold: '10',
     unit: 'unid',
-    expirationDate: '',
   });
   const [error, setError] = useState('');
 
@@ -63,9 +62,6 @@ export function ProductModal({ isOpen, onClose, product, onSuccess }: ProductMod
         categoryId: product.categoryId || '',
         stockThreshold: product.stockThreshold.toString(),
         unit: product.unit || 'unid',
-        expirationDate: product.expirationDate
-          ? new Date(product.expirationDate).toISOString().split('T')[0]
-          : '',
       });
     } else {
       setFormData({
@@ -77,7 +73,6 @@ export function ProductModal({ isOpen, onClose, product, onSuccess }: ProductMod
         categoryId: '',
         stockThreshold: '10',
         unit: 'unid',
-        expirationDate: '',
       });
     }
     setError('');
@@ -91,13 +86,13 @@ export function ProductModal({ isOpen, onClose, product, onSuccess }: ProductMod
     e.preventDefault();
     setError('');
 
-    if (!formData.sku.trim() || !formData.name.trim() || !formData.unitPrice) {
-      setError('SKU, Nombre y Precio son requeridos');
+    if (!formData.name.trim() || !formData.unitPrice) {
+      setError('Nombre y Precio son requeridos');
       return;
     }
 
     const payload = {
-      sku: formData.sku.trim(),
+      sku: formData.sku.trim() || undefined,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
       unitPrice: parseFloat(formData.unitPrice),
@@ -105,7 +100,6 @@ export function ProductModal({ isOpen, onClose, product, onSuccess }: ProductMod
       categoryId: formData.categoryId || undefined,
       stockThreshold: parseInt(formData.stockThreshold) || 10,
       unit: formData.unit,
-      expirationDate: formData.expirationDate || undefined,
     };
 
     try {
@@ -141,91 +135,92 @@ export function ProductModal({ isOpen, onClose, product, onSuccess }: ProductMod
       title={isEditing ? 'Editar Producto' : 'Nuevo Producto'}
       size="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="p-3 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 text-sm">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Informacion basica */}
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Informacion basica</p>
+          <Input
+            label="Nombre del producto"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            placeholder="Ej: Aceite de motor 5W-30"
+            required
+          />
+          <Input
+            label="Descripcion"
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+            placeholder="Descripcion breve (opcional)"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Select
+              label="Categoria"
+              value={formData.categoryId}
+              onChange={(e) => handleChange('categoryId', e.target.value)}
+              options={categoryOptions}
+            />
+            <Select
+              label="Proveedor"
+              value={formData.supplierId}
+              onChange={(e) => handleChange('supplierId', e.target.value)}
+              options={supplierOptions}
+            />
+          </div>
+        </div>
+
+        <hr className="border-[var(--border)]" />
+
+        {/* Precio y unidades */}
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Precio y unidades</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Input
+              label="Precio unitario"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.unitPrice}
+              onChange={(e) => handleChange('unitPrice', e.target.value)}
+              placeholder="0.00"
+              required
+            />
+            <Select
+              label="Unidad de medida"
+              value={formData.unit}
+              onChange={(e) => handleChange('unit', e.target.value)}
+              options={UNIT_OPTIONS}
+            />
+            <Input
+              label="Stock minimo"
+              type="number"
+              min="0"
+              value={formData.stockThreshold}
+              onChange={(e) => handleChange('stockThreshold', e.target.value)}
+              helperText="Alerta cuando baje de este nivel"
+            />
+          </div>
+        </div>
+
+        <hr className="border-[var(--border)]" />
+
+        {/* Identificacion */}
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Identificacion</p>
           <Input
             label="SKU"
             value={formData.sku}
             onChange={(e) => handleChange('sku', e.target.value)}
-            placeholder="Ej: PROD-001"
-            required
+            placeholder="Se genera automaticamente"
             disabled={isEditing}
-          />
-
-          <Input
-            label="Nombre"
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            placeholder="Nombre del producto"
-            required
+            helperText={!isEditing ? 'Dejar vacio para generar automaticamente' : undefined}
           />
         </div>
-
-        <Input
-          label="Descripcion (opcional)"
-          value={formData.description}
-          onChange={(e) => handleChange('description', e.target.value)}
-          placeholder="Descripcion del producto"
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Categoria"
-            value={formData.categoryId}
-            onChange={(e) => handleChange('categoryId', e.target.value)}
-            options={categoryOptions}
-          />
-
-          <Select
-            label="Proveedor"
-            value={formData.supplierId}
-            onChange={(e) => handleChange('supplierId', e.target.value)}
-            options={supplierOptions}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
-            label="Precio Unitario"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.unitPrice}
-            onChange={(e) => handleChange('unitPrice', e.target.value)}
-            placeholder="0.00"
-            required
-          />
-
-          <Input
-            label="Stock Minimo"
-            type="number"
-            min="1"
-            value={formData.stockThreshold}
-            onChange={(e) => handleChange('stockThreshold', e.target.value)}
-            helperText="Alerta cuando el stock baje"
-          />
-
-          <Select
-            label="Unidad de Medida"
-            value={formData.unit}
-            onChange={(e) => handleChange('unit', e.target.value)}
-            options={UNIT_OPTIONS}
-          />
-        </div>
-
-        <Input
-          label="Fecha de Caducidad (opcional)"
-          type="date"
-          value={formData.expirationDate}
-          onChange={(e) => handleChange('expirationDate', e.target.value)}
-          helperText="Dejar vacio si no aplica"
-        />
 
         <ModalFooter className="-mx-6 -mb-6 mt-6">
           <Button type="button" variant="ghost" onClick={onClose}>

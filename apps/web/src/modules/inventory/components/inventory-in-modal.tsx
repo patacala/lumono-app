@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/shared/components/ui/modal';
+import { Modal, ModalFooter } from '@/shared/components/ui/modal';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Select } from '@/shared/components/ui/select';
+import { Combobox } from '@/shared/components/ui/combobox';
 import { useRegisterIn, MovementSubType } from '../hooks/use-inventory';
 import { useProducts } from '@/modules/products/hooks/use-products';
 import { useLocations } from '@/modules/locations/hooks/use-locations';
@@ -16,7 +18,7 @@ interface Props {
   onClose: () => void;
 }
 
-const SUB_TYPES: { value: MovementSubType; label: string }[] = [
+const SUB_TYPES = [
   { value: 'PURCHASE', label: 'Compra' },
   { value: 'POSITIVE_ADJUSTMENT', label: 'Ajuste Positivo' },
   { value: 'PRODUCTION', label: 'Produccion' },
@@ -44,6 +46,9 @@ export function InventoryInModal({ isOpen, onClose }: Props) {
     formData.productId || undefined,
     formData.destLocationId || undefined
   );
+
+  const productOptions = products.map(p => ({ value: p.id, label: `${p.sku} - ${p.name}` }));
+  const locationOptions = (locations || []).map(l => ({ value: l.id, label: `${l.code} - ${l.name}` }));
 
   function resetForm() {
     setFormData({
@@ -88,112 +93,100 @@ export function InventoryInModal({ isOpen, onClose }: Props) {
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Registrar Entrada" size="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Subtipo</label>
-            <select
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Movimiento */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Movimiento</p>
+            <Select
+              label="Subtipo"
               value={formData.subType}
               onChange={e => setFormData({ ...formData, subType: e.target.value })}
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar subtipo</option>
-              {SUB_TYPES.map(st => (
-                <option key={st.value} value={st.value}>{st.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">Producto *</label>
+              options={SUB_TYPES}
+              placeholder="Seleccionar subtipo"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-[var(--fg-secondary)]">Producto *</span>
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowScanner(true)}>
                 Escanear Codigo
               </Button>
             </div>
-            <select
+            <Combobox
+              options={productOptions}
               value={formData.productId}
-              onChange={e => setFormData({ ...formData, productId: e.target.value })}
+              onChange={value => setFormData({ ...formData, productId: value })}
+              placeholder="Buscar producto por nombre o SKU..."
               required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar producto</option>
-              {products.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.sku} - {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ubicacion *</label>
-            <select
+            />
+            <Select
+              label="Ubicacion *"
               value={formData.destLocationId}
               onChange={e => setFormData({ ...formData, destLocationId: e.target.value })}
+              options={locationOptions}
+              placeholder="Seleccionar ubicacion"
               required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar ubicacion</option>
-              {locations?.map(l => (
-                <option key={l.id} value={l.id}>
-                  {l.code} - {l.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {stockData && formData.productId && formData.destLocationId && (
-            <div className="p-3 bg-info-50 border border-info-200 rounded-lg flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Stock actual en ubicacion:</span>
+            <div className="p-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-lg flex items-center justify-between">
+              <span className="text-sm font-medium text-[var(--fg)]">Stock actual en ubicacion:</span>
               <Badge variant={stockData.quantity > 0 ? 'success' : 'neutral'}>
                 {stockData.quantity} unidades
               </Badge>
             </div>
           )}
 
-          <Input
-            label="Cantidad *"
-            type="number"
-            min="1"
-            value={formData.quantity}
-            onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-            required
-          />
+          <hr className="border-[var(--border)]" />
 
-          <Input
-            label="Precio Unitario"
-            type="number"
-            min="0"
-            step="0.01"
-            value={formData.unitPrice}
-            onChange={e => setFormData({ ...formData, unitPrice: e.target.value })}
-          />
+          {/* Detalle */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Detalle</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Input
+                label="Cantidad *"
+                type="number"
+                min="1"
+                value={formData.quantity}
+                onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+                required
+              />
+              <Input
+                label="Precio Unitario"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.unitPrice}
+                onChange={e => setFormData({ ...formData, unitPrice: e.target.value })}
+              />
+            </div>
+          </div>
 
-          <Input
-            label="Documento de Referencia"
-            value={formData.referenceDocument}
-            onChange={e => setFormData({ ...formData, referenceDocument: e.target.value })}
-            placeholder="Ej: PO-2024-001"
-          />
+          <hr className="border-[var(--border)]" />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
-            <textarea
+          {/* Referencia */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Referencia</p>
+            <Input
+              label="Documento de Referencia"
+              value={formData.referenceDocument}
+              onChange={e => setFormData({ ...formData, referenceDocument: e.target.value })}
+              placeholder="Ej: PO-2024-001"
+            />
+            <Input
+              label="Notas"
               value={formData.notes}
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              rows={2}
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" variant="success" isLoading={registerIn.isPending}>
-              Registrar Entrada
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <ModalFooter className="-mx-6 -mb-6 mt-6">
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
             </Button>
-          </div>
+            <Button type="submit" isLoading={registerIn.isPending}>
+              Registrar Entrada
+            </Button>
+          </ModalFooter>
         </form>
       </Modal>
 

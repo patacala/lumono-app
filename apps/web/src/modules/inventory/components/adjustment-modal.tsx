@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/shared/components/ui/modal';
+import { Modal, ModalFooter } from '@/shared/components/ui/modal';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Select } from '@/shared/components/ui/select';
+import { Combobox } from '@/shared/components/ui/combobox';
 import { useRegisterAdjustment, AdjustmentReason, useStock } from '../hooks/use-inventory';
 import { useProducts } from '@/modules/products/hooks/use-products';
 import { useLocations } from '@/modules/locations/hooks/use-locations';
@@ -15,7 +17,7 @@ interface Props {
   onClose: () => void;
 }
 
-const REASONS: { value: AdjustmentReason; label: string }[] = [
+const REASONS = [
   { value: 'PHYSICAL_COUNT', label: 'Conteo Fisico' },
   { value: 'CORRECTION', label: 'Correccion' },
   { value: 'EXPIRATION', label: 'Expiracion' },
@@ -44,6 +46,13 @@ export function AdjustmentModal({ isOpen, onClose }: Props) {
     formData.locationId || undefined
   );
   const availableStock = stockData?.quantity ?? null;
+  const isNegative = formData.subType === 'NEGATIVE_ADJUSTMENT';
+  const hasStockSelected = formData.productId && formData.locationId;
+  const noStockForNegative = isNegative && hasStockSelected && availableStock !== null && availableStock <= 0;
+  const canSubmit = !noStockForNegative && !registerAdjustment.isPending;
+
+  const productOptions = products.map(p => ({ value: p.id, label: `${p.sku} - ${p.name}` }));
+  const locationOptions = (locations || []).map(l => ({ value: l.id, label: `${l.code} - ${l.name}` }));
 
   function resetForm() {
     setFormData({
@@ -65,6 +74,7 @@ export function AdjustmentModal({ isOpen, onClose }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (noStockForNegative) return;
     registerAdjustment.mutate(
       {
         productId: formData.productId,
@@ -86,17 +96,18 @@ export function AdjustmentModal({ isOpen, onClose }: Props) {
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Ajuste de Inventario" size="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Ajuste *</label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Tipo de ajuste */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Tipo de ajuste</p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, subType: 'POSITIVE_ADJUSTMENT' })}
                 className={`flex-1 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
                   formData.subType === 'POSITIVE_ADJUSTMENT'
-                    ? 'border-success-500 bg-success-50 text-success-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-[var(--status-ok)] bg-[var(--status-ok)]/10 text-[var(--status-ok)]'
+                    : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--border-hover)]'
                 }`}
               >
                 Ajuste Positivo (+)
@@ -106,111 +117,111 @@ export function AdjustmentModal({ isOpen, onClose }: Props) {
                 onClick={() => setFormData({ ...formData, subType: 'NEGATIVE_ADJUSTMENT' })}
                 className={`flex-1 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
                   formData.subType === 'NEGATIVE_ADJUSTMENT'
-                    ? 'border-danger-500 bg-danger-50 text-danger-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-[var(--status-critical)] bg-[var(--status-critical)]/10 text-[var(--status-critical)]'
+                    : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--border-hover)]'
                 }`}
               >
                 Ajuste Negativo (-)
               </button>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Razon *</label>
-            <select
+            <Select
+              label="Razon *"
               value={formData.reason}
               onChange={e => setFormData({ ...formData, reason: e.target.value })}
+              options={REASONS}
+              placeholder="Seleccionar razon"
               required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar razon</option>
-              {REASONS.map(r => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
+            />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">Producto *</label>
+          <hr className="border-[var(--border)]" />
+
+          {/* Producto y ubicacion */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Producto y ubicacion</p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-[var(--fg-secondary)]">Producto *</span>
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowScanner(true)}>
                 Escanear Codigo
               </Button>
             </div>
-            <select
+            <Combobox
+              options={productOptions}
               value={formData.productId}
-              onChange={e => setFormData({ ...formData, productId: e.target.value })}
+              onChange={value => setFormData({ ...formData, productId: value })}
+              placeholder="Buscar producto por nombre o SKU..."
               required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar producto</option>
-              {products.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.sku} - {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ubicacion *</label>
-            <select
+            />
+            <Select
+              label="Ubicacion *"
               value={formData.locationId}
               onChange={e => setFormData({ ...formData, locationId: e.target.value })}
+              options={locationOptions}
+              placeholder="Seleccionar ubicacion"
               required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar ubicacion</option>
-              {locations?.map(l => (
-                <option key={l.id} value={l.id}>
-                  {l.code} - {l.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
-          {availableStock !== null && formData.productId && formData.locationId && (
-            <div className="p-3 bg-info-50 border border-info-200 rounded-lg flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Stock actual:</span>
+          {availableStock !== null && hasStockSelected && (
+            <div className={`p-3 rounded-lg flex items-center justify-between ${
+              noStockForNegative
+                ? 'bg-[var(--status-critical)]/10 border border-[var(--status-critical)]/30'
+                : 'bg-[var(--surface-2)] border border-[var(--border)]'
+            }`}>
+              <span className="text-sm font-medium text-[var(--fg)]">Stock actual:</span>
               <Badge variant={availableStock > 10 ? 'success' : availableStock > 0 ? 'warning' : 'danger'}>
                 {availableStock} unidades
               </Badge>
             </div>
           )}
 
-          <Input
-            label="Cantidad *"
-            type="number"
-            min="1"
-            max={formData.subType === 'NEGATIVE_ADJUSTMENT' && availableStock !== null ? availableStock : undefined}
-            value={formData.quantity}
-            onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-            required
-            helperText={
-              formData.subType === 'NEGATIVE_ADJUSTMENT' && availableStock !== null
-                ? `Maximo: ${availableStock} unidades`
-                : undefined
-            }
-          />
+          {noStockForNegative && (
+            <p className="text-sm text-[var(--status-critical)]">
+              No hay stock disponible para realizar un ajuste negativo.
+            </p>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
-            <textarea
-              value={formData.notes}
-              onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              rows={2}
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          <hr className="border-[var(--border)]" />
+
+          {/* Detalle */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Detalle</p>
+            <Input
+              label="Cantidad *"
+              type="number"
+              min="1"
+              max={formData.subType === 'NEGATIVE_ADJUSTMENT' && availableStock !== null ? availableStock : undefined}
+              value={formData.quantity}
+              onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+              required
+              helperText={
+                formData.subType === 'NEGATIVE_ADJUSTMENT' && availableStock !== null
+                  ? `Maximo: ${availableStock} unidades`
+                  : undefined
+              }
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" variant="warning" isLoading={registerAdjustment.isPending}>
-              Registrar Ajuste
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <hr className="border-[var(--border)]" />
+
+          {/* Notas */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Notas</p>
+            <Input
+              label="Notas"
+              value={formData.notes}
+              onChange={e => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </div>
+
+          <ModalFooter className="-mx-6 -mb-6 mt-6">
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
             </Button>
-          </div>
+            <Button type="submit" isLoading={registerAdjustment.isPending} disabled={!canSubmit}>
+              Registrar Ajuste
+            </Button>
+          </ModalFooter>
         </form>
       </Modal>
 

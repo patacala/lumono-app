@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/shared/components/ui/modal';
+import { Modal, ModalFooter } from '@/shared/components/ui/modal';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Select } from '@/shared/components/ui/select';
+import { Combobox } from '@/shared/components/ui/combobox';
 import { useTransfer, useStock } from '../hooks/use-inventory';
 import { useProducts } from '@/modules/products/hooks/use-products';
 import { useLocations } from '@/modules/locations/hooks/use-locations';
@@ -36,6 +38,13 @@ export function TransferModal({ isOpen, onClose }: Props) {
     formData.originLocationId || undefined
   );
   const availableStock = stockData?.quantity ?? null;
+  const hasStockSelected = formData.productId && formData.originLocationId;
+  const noStock = hasStockSelected && availableStock !== null && availableStock <= 0;
+  const canSubmit = !noStock && !transfer.isPending;
+
+  const productOptions = products.map(p => ({ value: p.id, label: `${p.sku} - ${p.name}` }));
+  const allLocationOptions = (locations || []).map(l => ({ value: l.id, label: `${l.code} - ${l.name}` }));
+  const destLocationOptions = allLocationOptions.filter(l => l.value !== formData.originLocationId);
 
   function resetForm() {
     setFormData({
@@ -57,6 +66,7 @@ export function TransferModal({ isOpen, onClose }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (noStock) return;
     transfer.mutate(
       {
         productId: formData.productId,
@@ -78,109 +88,111 @@ export function TransferModal({ isOpen, onClose }: Props) {
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Transferencia" size="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">Producto *</label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Producto */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Producto</p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-[var(--fg-secondary)]">Producto *</span>
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowScanner(true)}>
                 Escanear Codigo
               </Button>
             </div>
-            <select
+            <Combobox
+              options={productOptions}
               value={formData.productId}
-              onChange={e => setFormData({ ...formData, productId: e.target.value })}
+              onChange={value => setFormData({ ...formData, productId: value })}
+              placeholder="Buscar producto por nombre o SKU..."
               required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar producto</option>
-              {products.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.sku} - {p.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ubicacion Origen *</label>
-            <select
-              value={formData.originLocationId}
-              onChange={e => setFormData({ ...formData, originLocationId: e.target.value })}
-              required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar origen</option>
-              {locations?.map(l => (
-                <option key={l.id} value={l.id}>
-                  {l.code} - {l.name}
-                </option>
-              ))}
-            </select>
+          <hr className="border-[var(--border)]" />
+
+          {/* Ubicaciones */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Ubicaciones</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Select
+                label="Origen *"
+                value={formData.originLocationId}
+                onChange={e => setFormData({ ...formData, originLocationId: e.target.value })}
+                options={allLocationOptions}
+                placeholder="Seleccionar origen"
+                required
+              />
+              <Select
+                label="Destino *"
+                value={formData.destLocationId}
+                onChange={e => setFormData({ ...formData, destLocationId: e.target.value })}
+                options={destLocationOptions}
+                placeholder="Seleccionar destino"
+                required
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ubicacion Destino *</label>
-            <select
-              value={formData.destLocationId}
-              onChange={e => setFormData({ ...formData, destLocationId: e.target.value })}
-              required
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar destino</option>
-              {locations
-                ?.filter(l => l.id !== formData.originLocationId)
-                .map(l => (
-                  <option key={l.id} value={l.id}>
-                    {l.code} - {l.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-
-          {availableStock !== null && formData.productId && formData.originLocationId && (
-            <div className="p-3 bg-info-50 border border-info-200 rounded-lg flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Stock en origen:</span>
+          {availableStock !== null && hasStockSelected && (
+            <div className={`p-3 rounded-lg flex items-center justify-between ${
+              noStock
+                ? 'bg-[var(--status-critical)]/10 border border-[var(--status-critical)]/30'
+                : 'bg-[var(--surface-2)] border border-[var(--border)]'
+            }`}>
+              <span className="text-sm font-medium text-[var(--fg)]">Stock en origen:</span>
               <Badge variant={availableStock > 10 ? 'success' : availableStock > 0 ? 'warning' : 'danger'}>
                 {availableStock} unidades
               </Badge>
             </div>
           )}
 
-          <Input
-            label="Cantidad *"
-            type="number"
-            min="1"
-            max={availableStock ?? undefined}
-            value={formData.quantity}
-            onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-            required
-            helperText={availableStock !== null ? `Maximo: ${availableStock} unidades` : undefined}
-          />
+          {noStock && (
+            <p className="text-sm text-[var(--status-critical)]">
+              No hay stock disponible en la ubicacion de origen para transferir.
+            </p>
+          )}
 
-          <Input
-            label="Documento de Referencia"
-            value={formData.referenceDocument}
-            onChange={e => setFormData({ ...formData, referenceDocument: e.target.value })}
-          />
+          <hr className="border-[var(--border)]" />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
-            <textarea
-              value={formData.notes}
-              onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              rows={2}
-              className="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          {/* Detalle */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Detalle</p>
+            <Input
+              label="Cantidad *"
+              type="number"
+              min="1"
+              max={availableStock ?? undefined}
+              value={formData.quantity}
+              onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+              required
+              helperText={availableStock !== null ? `Maximo: ${availableStock} unidades` : undefined}
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" variant="info" isLoading={transfer.isPending}>
-              Registrar Transferencia
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <hr className="border-[var(--border)]" />
+
+          {/* Referencia */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Referencia</p>
+            <Input
+              label="Documento de Referencia"
+              value={formData.referenceDocument}
+              onChange={e => setFormData({ ...formData, referenceDocument: e.target.value })}
+            />
+            <Input
+              label="Notas"
+              value={formData.notes}
+              onChange={e => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </div>
+
+          <ModalFooter className="-mx-6 -mb-6 mt-6">
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
             </Button>
-          </div>
+            <Button type="submit" isLoading={transfer.isPending} disabled={!canSubmit}>
+              Registrar Transferencia
+            </Button>
+          </ModalFooter>
         </form>
       </Modal>
 

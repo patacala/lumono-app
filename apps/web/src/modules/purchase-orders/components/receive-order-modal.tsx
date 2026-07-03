@@ -70,7 +70,7 @@ export function ReceiveOrderModal({ isOpen, onClose, orderId, version, items }: 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const validRows = rows.filter((r) => r.receivedQty > 0 && r.lotNumber.trim());
+    const validRows = rows.filter((r) => r.receivedQty > 0);
     if (validRows.length === 0) return;
 
     await receiveMutation.mutateAsync({
@@ -81,7 +81,7 @@ export function ReceiveOrderModal({ isOpen, onClose, orderId, version, items }: 
         items: validRows.map((r) => ({
           purchaseOrderItemId: r.purchaseOrderItemId,
           receivedQty: r.receivedQty,
-          lotNumber: r.lotNumber,
+          lotNumber: r.lotNumber.trim() || undefined,
           condition: r.condition,
           expirationDate: r.expirationDate || undefined,
           manufacturingDate: r.manufacturingDate || undefined,
@@ -100,13 +100,13 @@ export function ReceiveOrderModal({ isOpen, onClose, orderId, version, items }: 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-3 max-h-[60vh] overflow-y-auto">
           {rows.map((row, index) => (
-            <div key={row.purchaseOrderItemId} className="border rounded-lg p-3 space-y-2 bg-gray-50">
+            <div key={row.purchaseOrderItemId} className="border border-[var(--border)] rounded-lg p-3 space-y-2 bg-surface-200">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-sm font-semibold text-gray-900">{row.productName}</span>
-                  <span className="text-xs text-gray-500 ml-2 font-mono">{row.productSku}</span>
+                  <span className="text-sm font-semibold text-surface-900">{row.productName}</span>
+                  <span className="text-xs text-surface-600 ml-2 font-mono">{row.productSku}</span>
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-surface-600">
                   Ordenado: {row.ordered} | Recibido: {row.alreadyReceived} | Pendiente: {row.ordered - row.alreadyReceived}
                 </div>
               </div>
@@ -125,8 +125,8 @@ export function ReceiveOrderModal({ isOpen, onClose, orderId, version, items }: 
                   label="Nro. Lote"
                   value={row.lotNumber}
                   onChange={(e) => updateRow(index, 'lotNumber', e.target.value)}
-                  required
-                  placeholder="Ej: LOT-2026-001"
+                  placeholder="Se genera automaticamente"
+                  helperText="Opcional"
                 />
                 <Select
                   label="Condicion"

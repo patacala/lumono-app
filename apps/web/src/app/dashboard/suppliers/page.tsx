@@ -1,32 +1,88 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSuppliers, useCreateSupplier } from '@/modules/suppliers/hooks/use-suppliers';
-import { Card, CardHeader, CardBody, CardTitle } from '@/shared/components/ui/card';
+import { Card, CardBody } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { DataTable } from '@/shared/components/ui/data-table';
+import { Modal, ModalFooter } from '@/shared/components/ui/modal';
+import { useAuth } from '@/modules/auth/context/auth-context';
+import { Factory, Plus } from 'lucide-react';
+import { type ColumnDef } from '@tanstack/react-table';
+import type { Supplier } from '@/modules/suppliers/hooks/use-suppliers';
+
+const METRIC_CARD = {
+  icon: Factory,
+  title: 'Total Proveedores',
+  description: 'Proveedores registrados en el sistema',
+};
+
+const EMPTY_FORM = {
+  code: '',
+  name: '',
+  contact: '',
+  email: '',
+  phone: '',
+  address: '',
+};
 
 export default function SuppliersPage() {
+  const { hasPermission } = useAuth();
   const { data: suppliers, isLoading, error } = useSuppliers();
   const createSupplier = useCreateSupplier();
-  
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    code: '',
-    name: '',
-    contact: '',
-    email: '',
-    phone: '',
-    address: '',
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState('');
 
-  const filteredSuppliers = suppliers?.filter(
-    sup =>
-      sup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sup.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sup.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const canCreate = hasPermission('supplier.create');
+  const totalSuppliers = suppliers?.length ?? 0;
+
+  const columns = useMemo<ColumnDef<Supplier, any>[]>(
+    () => [
+      {
+        accessorKey: 'code',
+        header: 'Codigo',
+        cell: ({ getValue }) => (
+          <span className="font-mono font-medium text-[var(--fg)]">{getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: 'name',
+        header: 'Nombre',
+        cell: ({ getValue }) => (
+          <span className="font-medium text-[var(--fg)]">{getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: 'contact',
+        header: 'Contacto',
+        cell: ({ getValue }) => (getValue() as string) || '-',
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        cell: ({ getValue }) => {
+          const email = getValue() as string | undefined;
+          if (!email) return '-';
+          return (
+            <a
+              href={`mailto:${email}`}
+              className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+            >
+              {email}
+            </a>
+          );
+        },
+      },
+      {
+        accessorKey: 'phone',
+        header: 'Telefono',
+        cell: ({ getValue }) => (getValue() as string) || '-',
+      },
+    ],
+    [],
   );
 
   function handleSubmit(e: React.FormEvent) {
@@ -45,19 +101,25 @@ export default function SuppliersPage() {
       {
         onSuccess: () => {
           setShowForm(false);
-          setFormData({ code: '', name: '', contact: '', email: '', phone: '', address: '' });
+          setFormData(EMPTY_FORM);
         },
         onError: (err: any) => {
-          setFormError(err.message || 'Failed to create supplier');
+          setFormError(err.message || 'Error al crear proveedor');
         },
-      }
+      },
     );
+  }
+
+  function handleCloseForm() {
+    setShowForm(false);
+    setFormError('');
+    setFormData(EMPTY_FORM);
   }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-600">Loading suppliers...</div>
+        <div className="text-[var(--muted)]">Cargando proveedores...</div>
       </div>
     );
   }
@@ -66,7 +128,9 @@ export default function SuppliersPage() {
     return (
       <Card>
         <CardBody>
-          <div className="text-center py-8 text-red-600">Error loading suppliers</div>
+          <div className="text-center py-8 text-[var(--status-critical)]">
+            Error al cargar proveedores. Intenta de nuevo.
+          </div>
         </CardBody>
       </Card>
     );
@@ -76,165 +140,108 @@ export default function SuppliersPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Suppliers</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage supplier contacts and information
-          </p>
+          <h1 className="text-2xl font-bold text-[var(--fg)]">Proveedores</h1>
+          <p className="text-[var(--muted)]">Gestiona contactos e informacion de proveedores</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : '+ Add Supplier'}
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4" />
+            Nuevo Proveedor
+          </Button>
+        )}
       </div>
 
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Supplier</CardTitle>
-          </CardHeader>
-          <CardBody>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {formError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {formError}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Code *"
-                  value={formData.code}
-                  onChange={e => setFormData({ ...formData, code: e.target.value })}
-                  required
-                  placeholder="e.g., SUP-001"
-                />
-
-                <Input
-                  label="Name *"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  placeholder="Supplier name"
-                />
-
-                <Input
-                  label="Contact Person"
-                  value={formData.contact}
-                  onChange={e => setFormData({ ...formData, contact: e.target.value })}
-                  placeholder="Contact name"
-                />
-
-                <Input
-                  label="Email"
-                  type="email"
-                  value={formData.email}
-                  onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@example.com"
-                />
-
-                <Input
-                  label="Phone"
-                  value={formData.phone}
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+1-555-0100"
-                />
-
-                <Input
-                  label="Address"
-                  value={formData.address}
-                  onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Address"
-                />
-              </div>
-
-              <Button type="submit" disabled={createSupplier.isPending}>
-                {createSupplier.isPending ? 'Creating...' : 'Create Supplier'}
-              </Button>
-            </form>
-          </CardBody>
-        </Card>
-      )}
+      <div className="max-w-sm">
+        <div className="border border-[var(--border)] rounded-xl p-4 transition-all text-left">
+          <METRIC_CARD.icon className="w-5 h-5 text-[var(--accent)] mb-2" />
+          <p className="text-2xl font-bold text-[var(--fg)] tabular-nums mb-0.5">
+            {totalSuppliers}
+          </p>
+          <p className="text-sm font-semibold text-[var(--fg)]">{METRIC_CARD.title}</p>
+          <p className="text-xs text-[var(--muted)] mt-0.5">{METRIC_CARD.description}</p>
+        </div>
+      </div>
 
       <Card>
-        <CardHeader>
-          <Input
-            type="text"
-            placeholder="Search by name, code, or email..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+        <CardBody className="p-0 sm:p-4">
+          <DataTable
+            data={suppliers ?? []}
+            columns={columns}
+            searchPlaceholder="Buscar por nombre, codigo o email..."
           />
-        </CardHeader>
-
-        <CardBody className="p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Code
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredSuppliers && filteredSuppliers.length > 0 ? (
-                  filteredSuppliers.map(supplier => (
-                    <tr key={supplier.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-mono font-medium text-gray-900">
-                          {supplier.code}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{supplier.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{supplier.contact || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {supplier.email ? (
-                            <a
-                              href={`mailto:${supplier.email}`}
-                              className="text-primary-600 hover:text-primary-900"
-                            >
-                              {supplier.email}
-                            </a>
-                          ) : (
-                            '-'
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{supplier.phone || '-'}</div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
-                      <div className="text-gray-500">
-                        {searchTerm ? 'No suppliers found' : 'No suppliers yet'}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
         </CardBody>
       </Card>
+
+      <Modal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        title="Nuevo Proveedor"
+        size="lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {formError && (
+            <div className="bg-[var(--status-critical)] border border-[var(--border)] text-[oklch(68%_0.01_260)] px-4 py-3 rounded-lg text-sm">
+              {formError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Codigo *"
+              value={formData.code}
+              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+              required
+              placeholder="ej. SUP-001"
+            />
+
+            <Input
+              label="Nombre *"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              placeholder="Nombre del proveedor"
+            />
+
+            <Input
+              label="Contacto"
+              value={formData.contact}
+              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+              placeholder="Nombre del contacto"
+            />
+
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="email@ejemplo.com"
+            />
+
+            <Input
+              label="Telefono"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="+1-555-0100"
+            />
+
+            <Input
+              label="Direccion"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Direccion"
+            />
+          </div>
+
+          <ModalFooter>
+            <Button variant="ghost" type="button" onClick={handleCloseForm}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={createSupplier.isPending}>
+              {createSupplier.isPending ? 'Creando...' : 'Crear Proveedor'}
+            </Button>
+          </ModalFooter>
+        </form>
+      </Modal>
     </div>
   );
 }
-

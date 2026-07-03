@@ -40,12 +40,12 @@ const WarningIcon = () => (
 export function StatusBadge({ status, showLabel = true, className = '' }: StatusBadgeProps) {
   const config: Record<
     StockStatus,
-    { variant: 'success' | 'warning' | 'danger' | 'neutral'; icon?: React.ReactNode }
+    { variant: 'neutral' | 'attention' | 'critical' | 'ok'; icon?: React.ReactNode }
   > = {
-    normal: { variant: 'success' },
-    low: { variant: 'warning', icon: <WarningIcon /> },
-    out: { variant: 'danger' },
-    expiring: { variant: 'warning', icon: <ClockIcon /> },
+    normal: { variant: 'ok' },
+    low: { variant: 'attention', icon: <WarningIcon /> },
+    out: { variant: 'critical' },
+    expiring: { variant: 'attention', icon: <ClockIcon /> },
   };
 
   const { variant, icon } = config[status];

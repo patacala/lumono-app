@@ -6,12 +6,14 @@ import { Card, CardHeader, CardBody } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { DataTable } from '@/shared/components/ui/data-table';
+import { Tabs } from '@/shared/components/ui/tabs';
 import { InventoryInModal } from '@/modules/inventory/components/inventory-in-modal';
 import { InventoryOutModal } from '@/modules/inventory/components/inventory-out-modal';
 import { TransferModal } from '@/modules/inventory/components/transfer-modal';
 import { AdjustmentModal } from '@/modules/inventory/components/adjustment-modal';
 import { downloadExcelReport } from '@/modules/reports/hooks/use-reports';
 import Link from 'next/link';
+import { PackagePlus, PackageMinus, ArrowLeftRight, SlidersHorizontal } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 
 const TYPE_BADGES: Record<string, { variant: 'success' | 'danger' | 'info' | 'neutral'; label: string }> = {
@@ -32,6 +34,41 @@ const SUB_TYPE_LABELS: Record<string, string> = {
   INTERNAL_CONSUMPTION: 'Consumo',
 };
 
+const ACTION_CARDS = [
+  {
+    key: 'in',
+    icon: PackagePlus,
+    title: 'Entrada',
+    description: 'Registrar ingreso de productos',
+  },
+  {
+    key: 'out',
+    icon: PackageMinus,
+    title: 'Salida',
+    description: 'Registrar salida de productos',
+  },
+  {
+    key: 'transfer',
+    icon: ArrowLeftRight,
+    title: 'Transferencia',
+    description: 'Mover entre ubicaciones',
+  },
+  {
+    key: 'adjustment',
+    icon: SlidersHorizontal,
+    title: 'Ajuste',
+    description: 'Ajustar cantidades de stock',
+  },
+] as const;
+
+const FILTER_TABS = [
+  { id: 'ALL', label: 'Todos' },
+  { id: 'IN', label: 'Entradas' },
+  { id: 'OUT', label: 'Salidas' },
+  { id: 'TRANSFER', label: 'Transferencias' },
+  { id: 'ADJUSTMENT', label: 'Ajustes' },
+];
+
 export default function InventoryPage() {
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [page, setPage] = useState(1);
@@ -46,6 +83,15 @@ export default function InventoryPage() {
   const [showOutModal, setShowOutModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+
+  function handleActionClick(key: string) {
+    switch (key) {
+      case 'in': setShowInModal(true); break;
+      case 'out': setShowOutModal(true); break;
+      case 'transfer': setShowTransferModal(true); break;
+      case 'adjustment': setShowAdjustmentModal(true); break;
+    }
+  }
 
   const columns = useMemo<ColumnDef<InventoryMovement, any>[]>(
     () => [
@@ -87,7 +133,7 @@ export default function InventoryPage() {
         accessorKey: 'notes',
         header: 'Notas',
         cell: ({ getValue }) => (
-          <div className="max-w-xs truncate text-gray-500">
+          <div className="max-w-xs truncate text-[var(--muted)]">
             {getValue() || '-'}
           </div>
         ),
@@ -98,7 +144,7 @@ export default function InventoryPage() {
         cell: ({ row }) => (
           <Link
             href={`/dashboard/inventory/${row.original.id}`}
-            className="text-primary-600 hover:text-primary-900 text-sm font-medium"
+            className="text-[var(--accent)] hover:text-[var(--accent)] text-sm font-medium"
           >
             Ver
           </Link>
@@ -111,7 +157,7 @@ export default function InventoryPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-600">Cargando movimientos...</div>
+        <div className="text-[var(--muted)]">Cargando movimientos...</div>
       </div>
     );
   }
@@ -120,7 +166,7 @@ export default function InventoryPage() {
     return (
       <Card>
         <CardBody>
-          <div className="text-center py-8 text-danger-600">
+          <div className="text-center py-8 text-[var(--status-critical)]">
             Error al cargar movimientos. Intenta de nuevo.
           </div>
         </CardBody>
@@ -134,24 +180,10 @@ export default function InventoryPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Movimientos</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Registro de todos los movimientos de inventario
-          </p>
+          <h1 className="text-2xl font-bold text-[var(--fg)]">Movimientos</h1>
+          <p className="text-[var(--muted)]">Registro de todos los movimientos de inventario</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="success" size="sm" onClick={() => setShowInModal(true)}>
-            + Entrada
-          </Button>
-          <Button variant="danger" size="sm" onClick={() => setShowOutModal(true)}>
-            - Salida
-          </Button>
-          <Button variant="info" size="sm" onClick={() => setShowTransferModal(true)}>
-            Transferencia
-          </Button>
-          <Button variant="warning" size="sm" onClick={() => setShowAdjustmentModal(true)}>
-            Ajuste
-          </Button>
+        <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -159,27 +191,52 @@ export default function InventoryPage() {
           >
             Exportar Excel
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const table = document.querySelector('table');
+              if (!table) return;
+              const rows = Array.from(table.querySelectorAll('tr'));
+              const csv = rows.map(row =>
+                Array.from(row.querySelectorAll('th, td')).map(cell => `"${cell.textContent?.replace(/"/g, '""') || ''}"`).join(',')
+              ).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'movimientos.csv';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Exportar CSV
+          </Button>
         </div>
+      </div>
+
+      {/* Action Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {ACTION_CARDS.map(({ key, icon: Icon, title, description }) => (
+          <button
+            key={key}
+            onClick={() => handleActionClick(key)}
+            className="border border-[var(--border)] rounded-xl p-4 hover:border-[var(--accent)] hover:bg-[var(--surface-2)] cursor-pointer transition-all text-left"
+          >
+            <Icon className="w-5 h-5 text-[var(--accent)] mb-2" />
+            <p className="text-sm font-semibold text-[var(--fg)]">{title}</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">{description}</p>
+          </button>
+        ))}
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-700">Filtrar:</span>
-            {['ALL', 'IN', 'OUT', 'TRANSFER', 'ADJUSTMENT'].map(type => (
-              <button
-                key={type}
-                onClick={() => { setTypeFilter(type); setPage(1); }}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                  typeFilter === type
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {type === 'ALL' ? 'Todos' : TYPE_BADGES[type]?.label || type}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            tabs={FILTER_TABS}
+            activeTab={typeFilter}
+            onChange={(id) => { setTypeFilter(id); setPage(1); }}
+          />
         </CardHeader>
 
         <CardBody className="p-0 sm:p-4">
@@ -187,14 +244,13 @@ export default function InventoryPage() {
             data={movements}
             columns={columns}
             searchPlaceholder="Buscar movimientos..."
-            enableExportCsv
           />
         </CardBody>
       </Card>
 
       {data && data.total > data.limit && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-[var(--muted)]">
             Mostrando {movements.length} de {data.total} movimientos
           </div>
           <div className="flex gap-2">
@@ -206,7 +262,7 @@ export default function InventoryPage() {
             >
               Anterior
             </Button>
-            <span className="px-3 py-1 text-sm text-gray-700">
+            <span className="px-3 py-1 text-sm text-[var(--muted)]">
               Pagina {page} de {Math.ceil(data.total / data.limit)}
             </span>
             <Button

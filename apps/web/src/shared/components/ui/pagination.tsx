@@ -36,30 +36,30 @@ export function Pagination({
 
   const navButtonStyles = `
     ${baseButtonStyles}
-    p-2.5 rounded-xl
-    bg-white/60 hover:bg-white
-    text-surface-500 hover:text-primary-600
-    hover:-translate-y-0.5 hover:shadow-sm
+    p-2.5 rounded-lg
+    bg-[var(--surface-2)] hover:bg-surface-300
+    text-surface-600 hover:text-surface-900
+    border border-[var(--border)]
   `;
 
   const pageButtonStyles = (isActive: boolean) => `
     ${baseButtonStyles}
-    px-4 py-2.5 rounded-xl
+    px-4 py-2 rounded-lg
     ${
       isActive
-        ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-soft'
-        : 'bg-white/60 text-surface-700 hover:bg-white hover:shadow-sm hover:-translate-y-0.5'
+        ? 'bg-[var(--accent)] text-[#111] font-semibold'
+        : 'bg-[var(--surface-2)] text-surface-700 hover:bg-surface-300 border border-[var(--border)]'
     }
   `;
 
   return (
-    <div className="flex items-center justify-between px-4 py-4 glass-card rounded-xl mt-4">
+    <div className="flex items-center justify-between px-4 py-4 bg-[var(--surface)] border border-[var(--border)] rounded-xl mt-4">
       {/* Mobile pagination */}
       <div className="flex justify-between w-full sm:hidden">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`${baseButtonStyles} px-4 py-2.5 rounded-xl bg-white/60 text-surface-700 hover:bg-white hover:shadow-sm`}
+          className={`${baseButtonStyles} px-4 py-2 rounded-lg bg-[var(--surface-2)] text-surface-700 hover:bg-surface-300 border border-[var(--border)]`}
         >
           Previous
         </button>
@@ -69,7 +69,7 @@ export function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={`${baseButtonStyles} px-4 py-2.5 rounded-xl bg-white/60 text-surface-700 hover:bg-white hover:shadow-sm`}
+          className={`${baseButtonStyles} px-4 py-2 rounded-lg bg-[var(--surface-2)] text-surface-700 hover:bg-surface-300 border border-[var(--border)]`}
         >
           Next
         </button>
@@ -119,7 +119,7 @@ export function Pagination({
                 1
               </button>
               {startPage > 2 && (
-                <span className="px-2 text-surface-400">...</span>
+                <span className="px-2 text-surface-500">...</span>
               )}
             </>
           )}
@@ -137,7 +137,7 @@ export function Pagination({
           {endPage < totalPages && (
             <>
               {endPage < totalPages - 1 && (
-                <span className="px-2 text-surface-400">...</span>
+                <span className="px-2 text-surface-500">...</span>
               )}
               <button onClick={() => onPageChange(totalPages)} className={pageButtonStyles(false)}>
                 {totalPages}
@@ -164,4 +164,3 @@ export function Pagination({
     </div>
   );
 }
-

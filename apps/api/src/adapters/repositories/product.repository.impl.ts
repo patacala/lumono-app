@@ -44,9 +44,23 @@ export class ProductRepositoryImpl implements IProductRepository {
     return product ? this.mapToEntity(product) : null;
   }
 
+  async getNextSkuSequence(): Promise<number> {
+    const result = await this.prisma.$queryRaw<[{ max_seq: number | null }]>`
+      SELECT MAX(
+        CASE
+          WHEN sku ~ '^PROD-[0-9]+$'
+          THEN CAST(SUBSTRING(sku FROM 6) AS INTEGER)
+          ELSE 0
+        END
+      ) as max_seq
+      FROM products
+    `;
+    return (result[0]?.max_seq ?? 0) + 1;
+  }
+
   async create(data: CreateProductDto): Promise<Product> {
     const product = await this.prisma.product.create({
-      data,
+      data: data as any,
     });
     return this.mapToEntity(product);
   }

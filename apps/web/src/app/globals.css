@@ -4,79 +4,71 @@
 
 @layer base {
   :root {
-    /* Tremor Variables - Updated to match new palette */
-    --tremor-brand-faint: #f0f4f8;
-    --tremor-brand-muted: #bcccdc;
-    --tremor-brand: #627d98;
-    --tremor-brand-emphasis: #486581;
-    --tremor-brand-inverted: #ffffff;
+    /* Lumono Dark Premium Design Tokens — oklch */
 
-    --tremor-background: #ffffff;
-    --tremor-background-muted: #fafafa;
-    --tremor-background-subtle: #f5f5f5;
-    --tremor-background-emphasis: #e5e5e5;
+    /* Backgrounds & Surfaces */
+    --bg:           oklch(9% 0.006 260);
+    --bg-sidebar:   oklch(8% 0.005 260);
+    --surface:      oklch(14% 0.006 260);
+    --surface-2:    oklch(17% 0.008 260);
+    --surface-3:    oklch(22% 0.008 260);
 
-    --tremor-border: #d4d4d4;
-    --tremor-ring: #a3a3a3;
+    /* Foreground & Text */
+    --fg:           oklch(96% 0.004 260);
+    --fg-secondary: oklch(72% 0.008 260);
+    --muted:        oklch(58% 0.012 260);
 
-    --tremor-content: #171717;
-    --tremor-content-subtle: #525252;
-    --tremor-content-emphasis: #262626;
-    --tremor-content-inverted: #ffffff;
+    /* Borders */
+    --border:       oklch(22% 0.008 260);
+    --border-hover: oklch(30% 0.008 260);
 
-    --tremor-metric: #171717;
+    /* Accent (Orange Electric) */
+    --accent:       oklch(68% 0.19 55);
+    --accent-hover: oklch(72% 0.19 55);
+    --accent-dim:   oklch(68% 0.19 55 / 0.12);
+    --accent-glow:  oklch(68% 0.19 55 / 0.35);
+    --accent-dark:  oklch(52% 0.14 45);
 
-    /* Glass Design System */
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-bg-strong: rgba(255, 255, 255, 0.85);
-    --glass-bg-subtle: rgba(255, 255, 255, 0.5);
-    --glass-border: rgba(255, 255, 255, 0.18);
-    --glass-border-subtle: rgba(0, 0, 0, 0.05);
+    /* Status Tokens — Anti-semaphore (desaturated, no color tint) */
+    --status-neutral:   oklch(16% 0.008 260);
+    --status-attention: oklch(20% 0.012 260);
+    --status-critical:  oklch(13% 0.01 260);
+    --status-ok:        oklch(18% 0.01 260);
 
-    /* Surface backgrounds */
-    --surface-primary: #fafafa;
-    --surface-elevated: rgba(255, 255, 255, 0.9);
+    /* Typography */
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body:    'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-    /* Gradient backgrounds */
-    --gradient-subtle: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.9) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%);
+    /* Layout */
+    --sidebar-w:  240px;
+    --header-h:   60px;
 
-    /* Updated Brand Colors - Muted & Sophisticated */
-    --color-primary: #486581;
-    --color-primary-hover: #334e68;
-    --color-primary-light: #d9e2ec;
+    /* Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
 
-    --color-success: #059669;
-    --color-success-hover: #047857;
-    --color-success-light: #d1fae5;
+    /* Tremor Variables - Dark theme */
+    --tremor-brand-faint: oklch(17% 0.008 260);
+    --tremor-brand-muted: oklch(28% 0.008 260);
+    --tremor-brand: oklch(68% 0.19 55);
+    --tremor-brand-emphasis: oklch(72% 0.19 55);
+    --tremor-brand-inverted: oklch(12% 0.006 260);
 
-    --color-warning: #c77c2e;
-    --color-warning-hover: #a45f24;
-    --color-warning-light: #fef3e0;
+    --tremor-background: oklch(9% 0.006 260);
+    --tremor-background-muted: oklch(8% 0.005 260);
+    --tremor-background-subtle: oklch(14% 0.006 260);
+    --tremor-background-emphasis: oklch(17% 0.008 260);
 
-    --color-info: #4f46e5;
-    --color-info-hover: #4338ca;
-    --color-info-light: #e0e7ff;
+    --tremor-border: oklch(22% 0.008 260);
+    --tremor-ring: oklch(28% 0.008 260);
 
-    --color-danger: #d42a50;
-    --color-danger-hover: #b11f42;
-    --color-danger-light: #fce4e8;
+    --tremor-content: oklch(96% 0.004 260);
+    --tremor-content-subtle: oklch(58% 0.012 260);
+    --tremor-content-emphasis: oklch(80% 0.006 260);
+    --tremor-content-inverted: oklch(12% 0.006 260);
 
-    /* Surface Neutrals */
-    --color-surface-50: #fafafa;
-    --color-surface-100: #f5f5f5;
-    --color-surface-200: #e5e5e5;
-    --color-surface-300: #d4d4d4;
-    --color-surface-400: #a3a3a3;
-    --color-surface-500: #737373;
-    --color-surface-600: #525252;
-    --color-surface-700: #404040;
-    --color-surface-800: #262626;
-    --color-surface-900: #171717;
-
-    /* Sidebar */
-    --sidebar-width: 16rem;
-    --sidebar-collapsed-width: 4rem;
+    --tremor-metric: oklch(96% 0.004 260);
 
     /* Transition timing */
     --transition-fast: 150ms;
@@ -86,14 +78,22 @@
   }
 
   * {
-    border-color: #e5e5e5;
+    border-color: var(--border);
+  }
+
+  html {
+    background: var(--bg);
+    background-attachment: fixed;
+    height: 100%;
   }
 
   body {
     @apply antialiased;
-    background: linear-gradient(135deg, #f0f4f8 0%, #fafafa 50%, #f5f5f5 100%);
-    min-height: 100vh;
-    color: #171717;
+    background: var(--bg);
+    background-attachment: fixed;
+    min-height: 100%;
+    min-height: 100dvh;
+    color: var(--fg);
   }
 
   input[type='number']::-webkit-inner-spin-button,
@@ -112,61 +112,9 @@
   }
 }
 
-@layer components {
-  /* Glass Card Base */
-  .glass-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.2);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-  }
-
-  /* Glass Surface */
-  .glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-  }
-
-  /* Strong Glass */
-  .glass-strong {
-    background: var(--glass-bg-strong);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-  }
-
-  /* Subtle Glass */
-  .glass-subtle {
-    background: var(--glass-bg-subtle);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-
-  /* Gradient border utility */
-  .gradient-border {
-    position: relative;
-  }
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
   }
 
   /* Modal Animations */

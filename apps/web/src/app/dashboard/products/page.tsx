@@ -1,248 +1,433 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useProducts } from '@/modules/products/hooks/use-products';
-import { useSuppliers } from '@/modules/suppliers/hooks/use-suppliers';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardBody } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Badge } from '@/shared/components/ui/badge';
-import { Pagination } from '@/shared/components/ui/pagination';
 import { Select } from '@/shared/components/ui/select';
+import { Tabs } from '@/shared/components/ui/tabs';
+import { Badge } from '@/shared/components/ui/badge';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
+import { DataTable } from '@/shared/components/ui/data-table';
+import { useProducts, Product } from '@/modules/products/hooks/use-products';
+import { useCategories, Category } from '@/modules/categories/hooks/use-categories';
+import { ProductModal } from '@/modules/products/components/product-modal';
+import { CategoryModal } from '@/modules/categories/components/category-modal';
+import {
+  getStockStatus,
+  formatExpirationDate,
+  getDaysUntilExpiration,
+} from '@/shared/lib/stock-utils';
+import { useAuth } from '@/modules/auth/context/auth-context';
+import { Package, AlertTriangle, CalendarDays, Plus } from 'lucide-react';
+import { type ColumnDef } from '@tanstack/react-table';
+
+const METRIC_CARDS = [
+  {
+    key: 'total',
+    icon: Package,
+    title: 'Total Productos',
+    description: 'Productos registrados en el sistema',
+  },
+  {
+    key: 'lowStock',
+    icon: AlertTriangle,
+    title: 'Stock Bajo',
+    description: 'Productos bajo el minimo configurado',
+  },
+  {
+    key: 'expiringSoon',
+    icon: CalendarDays,
+    title: 'Por Vencer',
+    description: 'Caducan en los proximos 7 dias',
+  },
+] as const;
+
 
 export default function ProductsPage() {
+  const { hasPermission } = useAuth();
+  const [activeTab, setActiveTab] = useState<'items' | 'categories'>('items');
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSupplier, setSelectedSupplier] = useState('');
-  const [minStockInput, setMinStockInput] = useState('');
-  const [minStock, setMinStock] = useState('');
-  const limit = 10;
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
+  const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState<Category | undefined>();
 
-  const { data: suppliersData } = useSuppliers();
-  const suppliers = suppliersData || [];
-
-  const { data, isLoading, error } = useProducts({ 
-    page, 
-    limit,
-    search: searchTerm || undefined,
-    supplierId: selectedSupplier || undefined,
-    minStock: minStock ? parseInt(minStock) : undefined,
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({
+    page,
+    limit: 20,
+    search: search || undefined,
+    categoryId: selectedCategory || undefined,
   });
 
-  const products = data?.data || [];
-  const pagination = data?.pagination;
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setSearchTerm(searchInput);
-      setPage(1);
-    }, 350);
-    return () => clearTimeout(id);
-  }, [searchInput]);
+  const canCreate = hasPermission('product.create');
+  const canUpdate = hasPermission('product.update');
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setMinStock(minStockInput);
-      setPage(1);
-    }, 350);
-    return () => clearTimeout(id);
-  }, [minStockInput]);
+  const metrics = useMemo(() => {
+    if (!productsData?.data) return { total: 0, lowStock: 0, expiringSoon: 0 };
 
-  function getStockBadge(stock: number | undefined, threshold: number = 10) {
-    if (stock === undefined) return null;
+    const products = productsData.data;
+    const total = productsData.pagination.total;
+    const lowStock = products.filter(
+      (p) => (p.totalStock || 0) < p.stockThreshold && (p.totalStock || 0) > 0,
+    ).length;
+    const expiringSoon = products.filter(
+      (p) =>
+        p.expirationDate &&
+        getDaysUntilExpiration(p.expirationDate) <= 7 &&
+        getDaysUntilExpiration(p.expirationDate) >= 0,
+    ).length;
 
-    if (stock === 0) {
-      return <Badge variant="danger">Out of Stock</Badge>;
-    } else if (stock < threshold) {
-      return <Badge variant="warning">Low Stock: {stock}</Badge>;
-    } else {
-      return <Badge variant="success">{stock} units</Badge>;
-    }
-  }
+    return { total, lowStock, expiringSoon };
+  }, [productsData]);
 
-  function handleSupplierChange(value: string) {
-    setSelectedSupplier(value);
-    setPage(1);
-  }
-
-  const supplierOptions = [
-    { value: '', label: 'All Suppliers' },
-    ...suppliers.map(s => ({ value: s.id, label: s.name })),
+  const categoryOptions = [
+    { value: '', label: 'Todas las categorias' },
+    ...(categories?.map((c) => ({ value: c.id, label: c.name })) || []),
   ];
 
-  if (isLoading) {
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setSelectedCategoryForEdit(category);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCloseProductModal = () => {
+    setIsProductModalOpen(false);
+    setSelectedProduct(undefined);
+  };
+
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setSelectedCategoryForEdit(undefined);
+  };
+
+  const productColumns = useMemo<ColumnDef<Product, any>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Nombre',
+        cell: ({ row }) => (
+          <Link
+            href={`/dashboard/products/${row.original.id}`}
+            className="block group/link"
+          >
+            <p className="font-medium text-[var(--fg)] group-hover/link:text-[var(--accent)] transition-colors">
+              {row.original.name}
+            </p>
+            <p className="text-xs text-[var(--muted)]">{row.original.sku}</p>
+          </Link>
+        ),
+      },
+      {
+        accessorKey: 'categoryName',
+        header: 'Categoria',
+        cell: ({ getValue }) => {
+          const name = getValue() as string | undefined;
+          return name ? (
+            <Badge variant="neutral" size="sm">{name}</Badge>
+          ) : (
+            <span className="text-[var(--muted)]">-</span>
+          );
+        },
+      },
+      {
+        accessorKey: 'totalStock',
+        header: 'Stock Actual',
+        cell: ({ getValue }) => (
+          <span className="font-semibold tabular-nums">{getValue() ?? 0}</span>
+        ),
+      },
+      {
+        accessorKey: 'stockThreshold',
+        header: 'Stock Minimo',
+        cell: ({ getValue }) => (
+          <span className="tabular-nums">{getValue()}</span>
+        ),
+      },
+      {
+        accessorKey: 'unit',
+        header: 'Unidad',
+        cell: ({ getValue }) => (getValue() as string) || 'unid',
+      },
+      {
+        accessorKey: 'expirationDate',
+        header: 'Caducidad',
+        cell: ({ getValue }) => {
+          const date = getValue() as string | undefined;
+          if (!date) return <span className="text-[var(--muted)]">-</span>;
+          const days = getDaysUntilExpiration(date);
+          return (
+            <div>
+              <p>{formatExpirationDate(date)}</p>
+              {days <= 7 && days >= 0 && (
+                <p className="text-xs text-[oklch(68%_0.01_260)]">{days} dias</p>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        header: 'Estado',
+        cell: ({ row }) => {
+          const status = getStockStatus(
+            row.original.totalStock || 0,
+            row.original.stockThreshold,
+            row.original.expirationDate,
+          );
+          return <StatusBadge status={status} />;
+        },
+      },
+      ...(canUpdate
+        ? [
+            {
+              id: 'actions',
+              header: '',
+              cell: ({ row }: { row: { original: Product } }) => (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditProduct(row.original)}
+                >
+                  Editar
+                </Button>
+              ),
+            } as ColumnDef<Product, any>,
+          ]
+        : []),
+    ],
+    [canUpdate],
+  );
+
+  const categoryColumns = useMemo<ColumnDef<Category, any>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Nombre',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <div
+              className="w-3 h-3 rounded-full shrink-0"
+              style={{ backgroundColor: row.original.color || 'oklch(68% 0.19 55)' }}
+            />
+            <div>
+              <p className="font-medium text-[var(--fg)]">{row.original.name}</p>
+              {row.original.description && (
+                <p className="text-xs text-[var(--muted)] max-w-xs truncate">
+                  {row.original.description}
+                </p>
+              )}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'productCount',
+        header: 'Productos',
+        cell: ({ getValue }) => (
+          <span className="tabular-nums">{getValue() ?? 0}</span>
+        ),
+      },
+      ...(canUpdate
+        ? [
+            {
+              id: 'actions',
+              header: '',
+              cell: ({ row }: { row: { original: Category } }) => (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditCategory(row.original)}
+                >
+                  Editar
+                </Button>
+              ),
+            } as ColumnDef<Category, any>,
+          ]
+        : []),
+    ],
+    [canUpdate],
+  );
+
+  if (productsLoading && activeTab === 'items') {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-600">Loading products...</div>
+        <div className="text-[var(--muted)]">Cargando productos...</div>
       </div>
     );
   }
 
-  if (error) {
+  if (productsError) {
     return (
-      <Card className="mx-4 sm:mx-0">
+      <Card>
         <CardBody>
-          <div className="text-center py-8 text-danger-600">
-            Error loading products. Please try again.
+          <div className="text-center py-8 text-[var(--status-critical)]">
+            Error al cargar productos. Intenta de nuevo.
           </div>
         </CardBody>
       </Card>
     );
   }
+
+  const products = productsData?.data || [];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage your product inventory
-          </p>
+          <h1 className="text-2xl font-bold text-[var(--fg)]">Productos</h1>
+          <p className="text-[var(--muted)]">Gestiona productos, categorias y niveles de stock</p>
         </div>
-        <Link href="/dashboard/products/new">
-          <Button>
-            + Add Product
+        {canCreate && (
+          <Button
+            onClick={() =>
+              activeTab === 'items'
+                ? setIsProductModalOpen(true)
+                : setIsCategoryModalOpen(true)
+            }
+          >
+            <Plus className="w-4 h-4" />
+            {activeTab === 'items' ? 'Nuevo Producto' : 'Nueva Categoria'}
           </Button>
-        </Link>
+        )}
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {METRIC_CARDS.map(({ key, icon: Icon, title, description }) => (
+          <div
+            key={key}
+            className="border border-[var(--border)] rounded-xl p-4 transition-all text-left"
+          >
+            <Icon className="w-5 h-5 text-[var(--accent)] mb-2" />
+            <p className="text-2xl font-bold text-[var(--fg)] tabular-nums mb-0.5">
+              {metrics[key]}
+            </p>
+            <p className="text-sm font-semibold text-[var(--fg)]">{title}</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">{description}</p>
+          </div>
+        ))}
       </div>
 
       <Card>
         <CardHeader>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:items-end">
-            <div className="md:col-span-2">
-              <Input
-                label="Search"
-                type="text"
-                placeholder="Name or SKU..."
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-              />
-            </div>
-
-            <Select
-              label="Supplier"
-              options={supplierOptions}
-              value={selectedSupplier}
-              onChange={(e) => handleSupplierChange(e.target.value)}
-            />
-            
-            <Input
-              label="Min Stock"
-              type="number"
-              min="0"
-              placeholder="Min stock..."
-              value={minStockInput}
-              onChange={e => setMinStockInput(e.target.value)}
-            />
-
-            {(searchTerm || selectedSupplier || minStock) && (
-              <div className="md:col-span-4 flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchInput('');
-                    setSearchTerm('');
-                    setSelectedSupplier('');
-                    setMinStockInput('');
-                    setMinStock('');
-                    setPage(1);
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            )}
-          </div>
+          <Tabs
+            tabs={[
+              { id: 'items', label: 'Productos', count: productsData?.pagination.total },
+              { id: 'categories', label: 'Categorias', count: categories?.length },
+            ]}
+            activeTab={activeTab}
+            onChange={(id) => setActiveTab(id as 'items' | 'categories')}
+          />
         </CardHeader>
 
-        <CardBody className="p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    SKU
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Supplier
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unit Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {products.length > 0 ? (
-                  products.map(product => (
-                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-mono font-medium text-gray-900">
-                          {product.sku}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-600">
-                          {product.supplierName || '-'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStockBadge(product.totalStock, product.stockThreshold)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-semibold text-gray-900">
-                          ${product.unitPrice.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                        <Link
-                          href={`/dashboard/products/${product.id}`}
-                          className="text-primary-600 hover:text-primary-900 transition-colors"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="text-gray-500">
-                        {searchTerm ? 'No products found matching your search' : 'No products yet'}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardBody>
+        <CardBody className="p-0 sm:p-4">
+          {activeTab === 'items' && (
+            <>
+              <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Buscar productos..."
+                  className="px-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--fg)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] w-full sm:w-64 text-sm"
+                />
+                <div className="w-full sm:w-64">
+                  <Select
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setPage(1);
+                    }}
+                    options={categoryOptions}
+                  />
+                </div>
+              </div>
+              <DataTable
+                data={products}
+                columns={productColumns}
+                showSearch={false}
+                showPagination={false}
+              />
+            </>
+          )}
 
-        {pagination && pagination.totalPages > 1 && (
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.total}
-            itemsPerPage={pagination.limit}
-            onPageChange={setPage}
-          />
-        )}
+          {activeTab === 'categories' && (
+            categoriesLoading ? (
+              <div className="text-center py-8 text-[var(--muted)]">Cargando categorias...</div>
+            ) : categories?.length === 0 ? (
+              <div className="text-center py-12 text-[var(--muted)]">
+                <p>No hay categorias creadas</p>
+                {canCreate && (
+                  <Button className="mt-4" onClick={() => setIsCategoryModalOpen(true)}>
+                    <Plus className="w-4 h-4" />
+                    Crear Primera Categoria
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <DataTable
+                data={categories}
+                columns={categoryColumns}
+                searchPlaceholder="Buscar categorias..."
+              />
+            )
+          )}
+        </CardBody>
       </Card>
+
+      {activeTab === 'items' && productsData && productsData.pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-[var(--muted)]">
+            Mostrando {products.length} de {productsData.pagination.total} productos
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Anterior
+            </Button>
+            <span className="px-3 py-1 text-sm text-[var(--muted)]">
+              Pagina {page} de {productsData.pagination.totalPages}
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= productsData.pagination.totalPages}
+            >
+              Siguiente
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <ProductModal
+        isOpen={isProductModalOpen}
+        onClose={handleCloseProductModal}
+        product={selectedProduct}
+      />
+
+      <CategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={handleCloseCategoryModal}
+        category={selectedCategoryForEdit}
+      />
     </div>
   );
 }
-

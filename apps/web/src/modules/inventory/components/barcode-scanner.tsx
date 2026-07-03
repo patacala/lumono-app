@@ -70,16 +70,16 @@ export function BarcodeScanner({ onScan, onError, isOpen, onClose }: BarcodeScan
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 max-w-lg w-full mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Scan Barcode</h3>
+          <h3 className="text-lg font-semibold text-surface-900">Scan Barcode</h3>
           <button
             onClick={() => {
               stopScanner();
               onClose();
             }}
-            className="text-gray-500 hover:text-gray-700 text-xl"
+            className="text-surface-500 hover:text-surface-900 text-xl"
           >
             &times;
           </button>
@@ -88,7 +88,7 @@ export function BarcodeScanner({ onScan, onError, isOpen, onClose }: BarcodeScan
           id={containerRef.current}
           className="w-full rounded overflow-hidden"
         />
-        <p className="text-sm text-gray-500 mt-3 text-center">
+        <p className="text-sm text-surface-600 mt-3 text-center">
           Point the camera at a barcode to scan
         </p>
       </div>

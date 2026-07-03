@@ -58,7 +58,7 @@ export interface ProductFilters {
 }
 
 export interface CreateProductDto {
-  sku: string;
+  sku?: string;
   name: string;
   description?: string;
   unitPrice: number;

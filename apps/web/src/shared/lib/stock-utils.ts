@@ -45,10 +45,7 @@ export function getRowClassName(status: StockStatus): string {
   }
 }
 
-export function getStockCellClassName(stock: number, threshold: number): string {
-  if (stock > 0 && stock < threshold) {
-    return 'bg-yellow-100';
-  }
+export function getStockCellClassName(_stock: number, _threshold: number): string {
   return '';
 }
 

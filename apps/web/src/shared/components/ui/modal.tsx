@@ -44,9 +44,9 @@ export function Modal({ isOpen, onClose, children, title, size = 'md' }: ModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop with blur */}
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-primary-900/20 backdrop-blur-sm animate-backdrop-enter"
+        className="fixed inset-0 bg-black/70 animate-backdrop-enter"
         onClick={onClose}
       />
 
@@ -54,8 +54,8 @@ export function Modal({ isOpen, onClose, children, title, size = 'md' }: ModalPr
       <div
         className={`
           relative w-full ${sizeStyles[size]} max-h-[90vh]
-          bg-white/95 backdrop-blur-xl rounded-2xl
-          shadow-elevated-lg border border-white/30
+          bg-[var(--surface)] border border-[var(--border)] rounded-xl
+          shadow-elevated
           overflow-hidden flex flex-col
           animate-modal-enter
         `}
@@ -64,18 +64,17 @@ export function Modal({ isOpen, onClose, children, title, size = 'md' }: ModalPr
         {title && (
           <div
             className="
-              px-6 py-5 border-b border-surface-200/50
-              bg-gradient-to-r from-surface-50/50 to-transparent
+              px-6 py-5 border-b border-[var(--border)]
               flex items-center justify-between
             "
           >
-            <h2 className="text-xl font-semibold text-surface-900">{title}</h2>
+            <h2 className="text-lg font-semibold text-surface-900">{title}</h2>
             <button
               onClick={onClose}
               className="
-                p-2 rounded-xl
-                text-surface-400 hover:text-surface-600
-                hover:bg-surface-100/70
+                p-2 rounded-lg
+                text-surface-500 hover:text-surface-900
+                hover:bg-surface-200
                 transition-all duration-200
               "
             >
@@ -102,8 +101,7 @@ export function ModalFooter({ children, className = '' }: { children: ReactNode;
   return (
     <div
       className={`
-        px-6 py-4 border-t border-surface-200/50
-        bg-gradient-to-r from-surface-50/30 to-transparent
+        px-6 py-4 border-t border-[var(--border)]
         flex items-center justify-end gap-3
         ${className}
       `}
@@ -112,4 +110,3 @@ export function ModalFooter({ children, className = '' }: { children: ReactNode;
     </div>
   );
 }
-

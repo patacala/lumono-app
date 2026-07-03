@@ -131,8 +131,15 @@ export class UserRepositoryImpl implements IUserRepository {
   }
 
   async assignPermission(userId: string, permissionId: string, assignedBy: string): Promise<void> {
-    await this.prisma.userPermission.create({
-      data: {
+    await this.prisma.userPermission.upsert({
+      where: {
+        userId_permissionId: {
+          userId,
+          permissionId,
+        },
+      },
+      update: {},
+      create: {
         userId,
         permissionId,
         createdBy: assignedBy,

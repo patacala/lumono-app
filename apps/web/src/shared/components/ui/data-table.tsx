@@ -18,6 +18,8 @@ interface DataTableProps<T> {
   columns: ColumnDef<T, any>[];
   searchPlaceholder?: string;
   enableExportCsv?: boolean;
+  showSearch?: boolean;
+  showPagination?: boolean;
 }
 
 export function DataTable<T>({
@@ -25,6 +27,8 @@ export function DataTable<T>({
   columns,
   searchPlaceholder = 'Search...',
   enableExportCsv = false,
+  showSearch = true,
+  showPagination = true,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -64,13 +68,17 @@ export function DataTable<T>({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <input
-          type="text"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="px-4 py-2 border border-surface-200/50 rounded-xl bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-64 text-sm"
-        />
+        {showSearch ? (
+          <input
+            type="text"
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="px-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--fg)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] w-64 text-sm"
+          />
+        ) : (
+          <span />
+        )}
         {enableExportCsv && (
           <Button variant="secondary" size="sm" onClick={exportCsv}>
             Exportar CSV
@@ -78,16 +86,16 @@ export function DataTable<T>({
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-surface-200/50 bg-white/70 backdrop-blur-sm shadow-sm">
-        <table className="min-w-full divide-y divide-surface-200/50">
-          <thead className="bg-surface-50/50">
+      <div className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+        <table className="min-w-full divide-y divide-[var(--border)]">
+          <thead className="bg-[var(--surface-2)]">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
                     onClick={header.column.getToggleSortingHandler()}
-                    className="px-4 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider cursor-pointer hover:bg-surface-100/50 transition-colors"
+                    className="px-4 py-3 text-left text-[10px] font-medium text-surface-600 uppercase tracking-wider cursor-pointer hover:text-[var(--accent)] transition-colors"
                   >
                     <div className="flex items-center gap-1">
                       {header.isPlaceholder
@@ -101,10 +109,10 @@ export function DataTable<T>({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-surface-200/30">
+          <tbody className="divide-y divide-[var(--border)]">
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-surface-50/50 transition-colors">
+                <tr key={row.id} className="hover:bg-surface-200 transition-colors">
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-3 text-sm text-surface-900 whitespace-nowrap">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -114,7 +122,7 @@ export function DataTable<T>({
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-surface-500">
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-surface-600">
                   No se encontraron resultados
                 </td>
               </tr>
@@ -123,33 +131,35 @@ export function DataTable<T>({
         </table>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
-        <div className="text-sm text-surface-500">
-          Mostrando {table.getRowModel().rows.length} de{' '}
-          {table.getFilteredRowModel().rows.length} resultados
+      {showPagination && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-surface-600">
+            Mostrando {table.getRowModel().rows.length} de{' '}
+            {table.getFilteredRowModel().rows.length} resultados
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Anterior
+            </Button>
+            <span className="px-3 py-1 text-sm text-surface-700">
+              Pagina {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Siguiente
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <span className="px-3 py-1 text-sm text-surface-700">
-            Pagina {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Siguiente
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

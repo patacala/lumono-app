@@ -24,27 +24,28 @@ export function Select({
 }: SelectProps) {
   const baseSelectStyles = `
     block w-full px-4 py-2.5 text-sm
-    bg-white/70 backdrop-blur-sm
-    border border-surface-200/60 rounded-xl
+    bg-[var(--surface)]
+    border border-[var(--border)] rounded-lg
+    text-[var(--fg)]
     transition-all duration-200 ease-out
-    focus:bg-white/90 focus:border-primary-300
-    focus:ring-2 focus:ring-primary-100 focus:ring-offset-0
-    hover:border-surface-300
+    focus:border-[var(--accent)]
+    focus:ring-1 focus:ring-[var(--accent)] focus:ring-offset-0
+    hover:border-[var(--border-hover)]
     appearance-none cursor-pointer
   `;
 
   const errorStyles = error
-    ? 'border-danger-300 focus:border-danger-400 focus:ring-danger-100'
+    ? 'border-danger-600 focus:border-danger-500 focus:ring-danger-600'
     : '';
 
   const disabledStyles = props.disabled
-    ? 'bg-surface-100/50 cursor-not-allowed opacity-60'
+    ? 'bg-surface-200 cursor-not-allowed opacity-60'
     : '';
 
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-surface-700 mb-2">
+        <label className="block text-sm font-medium text-surface-800 mb-2">
           {label}
         </label>
       )}
@@ -64,7 +65,7 @@ export function Select({
             </option>
           ))}
         </select>
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-surface-400 group-focus-within:text-primary-500 transition-all duration-200 group-hover:translate-y-0.5">
+        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-surface-500 group-focus-within:text-[var(--accent)] transition-colors duration-200">
           <svg
             className="h-5 w-5"
             xmlns="http://www.w3.org/2000/svg"
@@ -79,11 +80,10 @@ export function Select({
           </svg>
         </div>
       </div>
-      {error && <p className="mt-2 text-sm text-danger-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-danger-700">{error}</p>}
       {!error && helperText && (
-        <p className="mt-2 text-sm text-surface-500">{helperText}</p>
+        <p className="mt-2 text-sm text-surface-600">{helperText}</p>
       )}
     </div>
   );
 }
-
