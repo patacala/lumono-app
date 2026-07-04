@@ -44,6 +44,13 @@ export class ProductRepositoryImpl implements IProductRepository {
     return product ? this.mapToEntity(product) : null;
   }
 
+  async findByBarcode(barcode: string): Promise<Product | null> {
+    const product = await this.prisma.product.findFirst({
+      where: { barcode, deletedAt: null },
+    });
+    return product ? this.mapToEntity(product) : null;
+  }
+
   async getNextSkuSequence(): Promise<number> {
     const result = await this.prisma.$queryRaw<[{ max_seq: number | null }]>`
       SELECT MAX(
@@ -63,6 +70,13 @@ export class ProductRepositoryImpl implements IProductRepository {
       data: data as any,
     });
     return this.mapToEntity(product);
+  }
+
+  async createMany(data: CreateProductDto[]): Promise<Product[]> {
+    const products = await this.prisma.$transaction(
+      data.map((dto) => this.prisma.product.create({ data: dto as any })),
+    );
+    return products.map(this.mapToEntity);
   }
 
   async update(id: string, data: UpdateProductDto, expectedVersion: number): Promise<Product> {

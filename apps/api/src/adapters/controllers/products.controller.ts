@@ -11,13 +11,15 @@ import {
   HttpStatus,
   Inject,
 } from '@nestjs/common';
-import { IsString, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { CreateProductUseCase } from '@/use-cases/products/create-product.use-case';
 import { UpdateProductUseCase } from '@/use-cases/products/update-product.use-case';
 import { DeleteProductUseCase } from '@/use-cases/products/delete-product.use-case';
+import { BulkCreateProductsUseCase } from '@/use-cases/products/bulk-create-products.use-case';
 import { IProductRepository } from '@/domain/ports/repositories/product.repository';
 import { calculatePagination, createPaginatedResponse } from '@/shared/dto/pagination.dto';
 
@@ -37,6 +39,25 @@ class CreateProductDto {
   @IsNumber() @Min(1) @IsOptional() stockThreshold?: number;
   @IsString() @IsOptional() unit?: string;
   @IsOptional() expirationDate?: string;
+}
+
+class ImportProductDto {
+  @IsString() @IsOptional() sku?: string;
+  @IsString() @IsNotEmpty() name: string;
+  @IsString() @IsOptional() description?: string;
+  @IsNumber() @Min(0) unitPrice: number;
+  @IsString() @IsOptional() barcode?: string;
+  @IsString() @IsOptional() brand?: string;
+  @IsNumber() @Min(0) @IsOptional() salePrice?: number;
+  @IsNumber() @Min(1) @IsOptional() stockThreshold?: number;
+  @IsString() @IsOptional() unit?: string;
+}
+
+class BulkImportDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImportProductDto)
+  products: ImportProductDto[];
 }
 
 class UpdateProductDto {
@@ -67,6 +88,7 @@ export class ProductsController {
     private readonly createProductUseCase: CreateProductUseCase,
     private readonly updateProductUseCase: UpdateProductUseCase,
     private readonly deleteProductUseCase: DeleteProductUseCase,
+    private readonly bulkCreateProductsUseCase: BulkCreateProductsUseCase,
   ) {}
 
   @Get()
@@ -105,6 +127,16 @@ export class ProductsController {
     );
 
     return createPaginatedResponse(products, total, pagination.page, pagination.limit);
+  }
+
+  @Post('import')
+  @RequirePermissions('product.create')
+  async importProducts(@Body() dto: BulkImportDto, @CurrentUser('sub') userId: string) {
+    const products = dto.products.map((p) => ({
+      ...p,
+      createdBy: userId,
+    }));
+    return this.bulkCreateProductsUseCase.execute(products);
   }
 
   @Get(':id')

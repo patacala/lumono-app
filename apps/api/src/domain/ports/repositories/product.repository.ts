@@ -57,8 +57,10 @@ export interface IProductRepository {
   findById(id: string): Promise<Product | null>;
   findByIdWithStock(id: string): Promise<Product | null>;
   findBySku(sku: string): Promise<Product | null>;
+  findByBarcode(barcode: string): Promise<Product | null>;
   getNextSkuSequence(): Promise<number>;
   create(data: CreateProductDto): Promise<Product>;
+  createMany(data: CreateProductDto[]): Promise<Product[]>;
   update(id: string, data: UpdateProductDto, expectedVersion: number): Promise<Product>;
   softDelete(id: string, deletedBy: string, expectedVersion: number): Promise<void>;
   findAll(): Promise<Product[]>;

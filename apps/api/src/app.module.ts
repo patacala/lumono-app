@@ -51,6 +51,7 @@ import { RefreshTokenUseCase } from './use-cases/auth/refresh-token.use-case';
 import { CreateProductUseCase } from './use-cases/products/create-product.use-case';
 import { UpdateProductUseCase } from './use-cases/products/update-product.use-case';
 import { DeleteProductUseCase } from './use-cases/products/delete-product.use-case';
+import { BulkCreateProductsUseCase } from './use-cases/products/bulk-create-products.use-case';
 import { RegisterInventoryInUseCase } from './use-cases/inventory/register-inventory-in.use-case';
 import { RegisterInventoryOutUseCase } from './use-cases/inventory/register-inventory-out.use-case';
 import { TransferInventoryUseCase } from './use-cases/inventory/transfer-inventory.use-case';
@@ -98,7 +99,7 @@ const LOT_REPOSITORY = 'ILotRepository';
     }),
     ThrottlerModule.forRoot([{
       ttl: 60000,
-      limit: 10,
+      limit: 200,
     }]),
     PrismaModule,
     RedisCacheModule,
@@ -196,6 +197,7 @@ const LOT_REPOSITORY = 'ILotRepository';
     CreateProductUseCase,
     UpdateProductUseCase,
     DeleteProductUseCase,
+    BulkCreateProductsUseCase,
     RegisterInventoryInUseCase,
     RegisterInventoryOutUseCase,
     TransferInventoryUseCase,
