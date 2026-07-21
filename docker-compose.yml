@@ -1,28 +1,53 @@
+# Lumono production stack for Coolify (Docker Compose Build Pack)
+#
+# Coolify setup:
+# 1. New Resource → Git Repository → Build Pack: Docker Compose
+# 2. Base Directory: / (repo root)
+# 3. Docker Compose Location: docker-compose.yml
+# 4. Enable "Copy base directory to deployment directory"
+# 5. Assign domains:
+#    - web  → https://app.tudominio.com
+#    - api  → https://api.tudominio.com
+#
+# Local dev (solo DB/cache):
+#   docker compose up postgres redis -d
+#
+# Local full stack:
+#   docker compose up --build
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: lumono-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: lumono
-      POSTGRES_PASSWORD: lumono_dev_password
-      POSTGRES_DB: lumono_inventory
+      POSTGRES_USER: ${POSTGRES_USER:-lumono}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lumono_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-lumono_inventory}
+    # Ports for local dev only - comment out in production (Coolify)
     ports:
       - '5432:5432'
+    # For production, use expose instead:
+    # expose:
+    #   - '5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U lumono -d lumono_inventory']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-lumono} -d ${POSTGRES_DB:-lumono_inventory}']
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
-    container_name: lumono-redis
     restart: unless-stopped
+    command: redis-server --appendonly yes
+    # Ports for local dev only - comment out in production (Coolify)
     ports:
       - '6379:6379'
+    # For production, use expose instead:
+    # expose:
+    #   - '6379'
     volumes:
       - redis_data:/data
     healthcheck:
@@ -31,33 +56,48 @@ services:
       timeout: 5s
       retries: 5
 
-  # Optional: run the full stack in Docker with `docker compose --profile full up --build`
   api:
-    profiles: ['full']
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: lumono-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://lumono:lumono_dev_password@postgres:5432/lumono_inventory
-      JWT_ACCESS_SECRET: dev_access_secret_change_in_production
-      JWT_REFRESH_SECRET: dev_refresh_secret_change_in_production
-      JWT_ACCESS_EXPIRATION: 15m
-      JWT_REFRESH_EXPIRATION: 7d
       PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lumono}:${POSTGRES_PASSWORD:-lumono_dev_password}@postgres:5432/${POSTGRES_DB:-lumono_inventory}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change_me_access_secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change_me_refresh_secret}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-15m}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-    ports:
-      - '3001:3001'
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      RUN_SEED: ${RUN_SEED:-false}
+    expose:
+      - '3001'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
 
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    expose:
+      - '3000'
+    depends_on:
+      - api
+
 volumes:
   postgres_data:
   redis_data:
-

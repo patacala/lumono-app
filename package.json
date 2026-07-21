@@ -13,10 +13,11 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo run clean && rm -rf node_modules",
-    "docker:up": "docker compose up postgres -d",
+    "docker:up": "docker compose up postgres redis -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f postgres",
-    "docker:full": "docker compose --profile full up --build -d"
+    "docker:logs": "docker compose logs -f",
+    "docker:build": "docker compose build",
+    "docker:full": "docker compose up --build -d"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

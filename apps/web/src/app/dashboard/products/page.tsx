@@ -12,6 +12,7 @@ import { DataTable } from '@/shared/components/ui/data-table';
 import { useProducts, Product } from '@/modules/products/hooks/use-products';
 import { useCategories, Category } from '@/modules/categories/hooks/use-categories';
 import { ProductModal } from '@/modules/products/components/product-modal';
+import { CsvImportModal } from '@/modules/products/components/csv-import-modal';
 import { CategoryModal } from '@/modules/categories/components/category-modal';
 import {
   getStockStatus,
@@ -19,7 +20,7 @@ import {
   getDaysUntilExpiration,
 } from '@/shared/lib/stock-utils';
 import { useAuth } from '@/modules/auth/context/auth-context';
-import { Package, AlertTriangle, CalendarDays, Plus } from 'lucide-react';
+import { Package, AlertTriangle, CalendarDays, Plus, Upload } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 
 const METRIC_CARDS = [
@@ -54,6 +55,7 @@ export default function ProductsPage() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
   const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState<Category | undefined>();
+  const [isCsvImportOpen, setIsCsvImportOpen] = useState(false);
 
   const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({
     page,
@@ -288,16 +290,24 @@ export default function ProductsPage() {
           <p className="text-[var(--muted)]">Gestiona productos, categorias y niveles de stock</p>
         </div>
         {canCreate && (
-          <Button
-            onClick={() =>
-              activeTab === 'items'
-                ? setIsProductModalOpen(true)
-                : setIsCategoryModalOpen(true)
-            }
-          >
-            <Plus className="w-4 h-4" />
-            {activeTab === 'items' ? 'Nuevo Producto' : 'Nueva Categoria'}
-          </Button>
+          <div className="flex gap-2">
+            {activeTab === 'items' && (
+              <Button variant="secondary" onClick={() => setIsCsvImportOpen(true)}>
+                <Upload className="w-4 h-4" />
+                Importar CSV
+              </Button>
+            )}
+            <Button
+              onClick={() =>
+                activeTab === 'items'
+                  ? setIsProductModalOpen(true)
+                  : setIsCategoryModalOpen(true)
+              }
+            >
+              <Plus className="w-4 h-4" />
+              {activeTab === 'items' ? 'Nuevo Producto' : 'Nueva Categoria'}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -379,7 +389,7 @@ export default function ProductsPage() {
               </div>
             ) : (
               <DataTable
-                data={categories}
+                data={categories ?? []}
                 columns={categoryColumns}
                 searchPlaceholder="Buscar categorias..."
               />
@@ -427,6 +437,11 @@ export default function ProductsPage() {
         isOpen={isCategoryModalOpen}
         onClose={handleCloseCategoryModal}
         category={selectedCategoryForEdit}
+      />
+
+      <CsvImportModal
+        isOpen={isCsvImportOpen}
+        onClose={() => setIsCsvImportOpen(false)}
       />
     </div>
   );

@@ -1,9 +1,15 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
+  experimental: {
+    outputFileTracingRoot: path.join(__dirname, '../../'),
+  },
   transpilePackages: [],
   env: {
-    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001',
+    API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || process.env.API_BASE_URL || 'http://localhost:3001',
   },
   webpack: (config, { dev }) => {
     if (dev) {

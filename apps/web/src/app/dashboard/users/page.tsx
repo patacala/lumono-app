@@ -122,14 +122,17 @@ export default function UsersPage() {
   const { data: allPermissions } = usePermissions();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+
+  // Derive selectedUser from the live query data so it updates when cache is invalidated
+  const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) ?? null : null;
 
   const canManageUsers = hasPermission('user.manage');
   const totalUsers = users.length;
 
   function handleManagePermissions(user: User) {
-    setSelectedUser(user);
+    setSelectedUserId(user.id);
     setIsPermissionsModalOpen(true);
   }
 
@@ -272,7 +275,7 @@ export default function UsersPage() {
         isOpen={isPermissionsModalOpen}
         onClose={() => {
           setIsPermissionsModalOpen(false);
-          setSelectedUser(null);
+          setSelectedUserId(null);
         }}
         user={selectedUser}
         allPermissions={allPermissions || []}

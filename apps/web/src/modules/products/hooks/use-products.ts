@@ -137,6 +137,23 @@ export function useUpdateProduct(id: string) {
   });
 }
 
+export interface ImportProductsResult {
+  created: number;
+  errors: { row: number; message: string }[];
+}
+
+export function useImportProducts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (products: Omit<CreateProductDto, 'supplierId' | 'categoryId' | 'expirationDate'>[]) =>
+      apiClient.post<ImportProductsResult>('/products/import', { products }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
 
