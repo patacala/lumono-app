@@ -4,6 +4,7 @@ import { Public } from '../auth/public.decorator';
 import { LoginUseCase } from '@/use-cases/auth/login.use-case';
 import { RefreshTokenUseCase } from '@/use-cases/auth/refresh-token.use-case';
 import { SetupAdminUseCase } from '@/use-cases/auth/setup-admin.use-case';
+import { CreatePermissionsUseCase } from '@/use-cases/auth/create-permissions.use-case';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 class LoginDto {
@@ -28,6 +29,7 @@ export class AuthController {
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly setupAdminUseCase: SetupAdminUseCase,
+    private readonly createPermissionsUseCase: CreatePermissionsUseCase,
   ) {}
 
   @Public()
@@ -49,6 +51,13 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async setupAdmin() {
     return this.setupAdminUseCase.execute();
+  }
+
+  @Public()
+  @Post('create-permissions')
+  @HttpCode(HttpStatus.CREATED)
+  async createPermissions() {
+    return this.createPermissionsUseCase.execute();
   }
 }
 
