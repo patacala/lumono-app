@@ -7,6 +7,9 @@ RUN apk add --no-cache python3 make g++ openssl
 
 FROM base AS deps
 
+# Force development mode for installing dependencies (including devDependencies)
+ENV NODE_ENV=development
+
 COPY package*.json ./
 COPY .npmrc ./
 COPY apps/api/package*.json ./apps/api/
