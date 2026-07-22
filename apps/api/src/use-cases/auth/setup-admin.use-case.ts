@@ -1,6 +1,6 @@
 import { Injectable, Inject, ConflictException } from '@nestjs/common';
-import { IUserRepository } from '@/domain/ports/user.repository';
-import { IPermissionRepository } from '@/domain/ports/permission.repository';
+import { IUserRepository } from '@/domain/ports/repositories/user.repository';
+import { IPermissionRepository } from '@/domain/ports/repositories/permission.repository';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
