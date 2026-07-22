@@ -34,7 +34,7 @@ export class SetupAdminUseCase {
 
     // Assign all permissions to admin
     for (const permission of allPermissions) {
-      await this.permissionRepository.assignToUser(adminUser.id, permission.id);
+      await this.userRepository.assignPermission(adminUser.id, permission.id, 'system');
     }
 
     return {
