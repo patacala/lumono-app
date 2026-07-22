@@ -48,8 +48,7 @@ import { ReportsProcessor } from './infrastructure/queues/reports.processor';
 // Use Cases
 import { LoginUseCase } from './use-cases/auth/login.use-case';
 import { RefreshTokenUseCase } from './use-cases/auth/refresh-token.use-case';
-import { SetupAdminUseCase } from './use-cases/auth/setup-admin.use-case';
-import { CreatePermissionsUseCase } from './use-cases/auth/create-permissions.use-case';
+import { InitialSetupUseCase } from './use-cases/auth/initial-setup.use-case';
 import { CreateProductUseCase } from './use-cases/products/create-product.use-case';
 import { UpdateProductUseCase } from './use-cases/products/update-product.use-case';
 import { DeleteProductUseCase } from './use-cases/products/delete-product.use-case';
@@ -196,8 +195,7 @@ const LOT_REPOSITORY = 'ILotRepository';
     // Use Cases
     LoginUseCase,
     RefreshTokenUseCase,
-    SetupAdminUseCase,
-    CreatePermissionsUseCase,
+    InitialSetupUseCase,
     CreateProductUseCase,
     UpdateProductUseCase,
     DeleteProductUseCase,

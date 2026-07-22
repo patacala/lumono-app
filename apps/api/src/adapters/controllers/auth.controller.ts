@@ -3,8 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator';
 import { LoginUseCase } from '@/use-cases/auth/login.use-case';
 import { RefreshTokenUseCase } from '@/use-cases/auth/refresh-token.use-case';
-import { SetupAdminUseCase } from '@/use-cases/auth/setup-admin.use-case';
-import { CreatePermissionsUseCase } from '@/use-cases/auth/create-permissions.use-case';
+import { InitialSetupUseCase } from '@/use-cases/auth/initial-setup.use-case';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 class LoginDto {
@@ -28,8 +27,7 @@ export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
-    private readonly setupAdminUseCase: SetupAdminUseCase,
-    private readonly createPermissionsUseCase: CreatePermissionsUseCase,
+    private readonly initialSetupUseCase: InitialSetupUseCase,
   ) {}
 
   @Public()
@@ -47,17 +45,10 @@ export class AuthController {
   }
 
   @Public()
-  @Post('setup-admin')
+  @Post('initial-setup')
   @HttpCode(HttpStatus.CREATED)
-  async setupAdmin() {
-    return this.setupAdminUseCase.execute();
-  }
-
-  @Public()
-  @Post('create-permissions')
-  @HttpCode(HttpStatus.CREATED)
-  async createPermissions() {
-    return this.createPermissionsUseCase.execute();
+  async initialSetup() {
+    return this.initialSetupUseCase.execute();
   }
 }
 
