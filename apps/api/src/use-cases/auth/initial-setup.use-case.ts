@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/infrastructure/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
@@ -7,19 +7,15 @@ export class InitialSetupUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute() {
-    // Check if setup was already done
-    const existingUsers = await this.prisma.user.count();
-    if (existingUsers > 0) {
-      throw new ConflictException('Initial setup already completed. Database has existing users.');
-    }
-
     const result = {
       permissionsCreated: 0,
+      permissionsSkipped: 0,
       userCreated: false,
+      userAlreadyExisted: false,
       permissionsAssigned: 0,
     };
 
-    // 1. Create all permissions
+    // 1. Create permissions (skip if already exist)
     const permissions = [
       { name: 'product.create', description: 'Create products', category: 'product' },
       { name: 'product.read', description: 'View products', category: 'product' },
@@ -61,40 +57,69 @@ export class InitialSetupUseCase {
     ];
 
     for (const permission of permissions) {
-      await this.prisma.permission.create({ data: permission });
-      result.permissionsCreated++;
+      const existing = await this.prisma.permission.findUnique({
+        where: { name: permission.name },
+      });
+
+      if (!existing) {
+        await this.prisma.permission.create({ data: permission });
+        result.permissionsCreated++;
+      } else {
+        result.permissionsSkipped++;
+      }
     }
 
-    // 2. Create admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    const adminUser = await this.prisma.user.create({
-      data: {
-        email: 'admin@lumono.com',
-        name: 'Admin',
-        password: hashedPassword,
-        active: true,
-      },
+    // 2. Find or create admin user
+    let adminUser = await this.prisma.user.findUnique({
+      where: { email: 'admin@lumono.com' },
     });
-    result.userCreated = true;
 
-    // 3. Assign all permissions to admin
-    const allPermissions = await this.prisma.permission.findMany();
-    for (const permission of allPermissions) {
-      await this.prisma.userPermission.create({
+    if (!adminUser) {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      adminUser = await this.prisma.user.create({
         data: {
-          userId: adminUser.id,
-          permissionId: permission.id,
-          assignedBy: 'system',
+          email: 'admin@lumono.com',
+          name: 'Admin',
+          password: hashedPassword,
+          active: true,
         },
       });
-      result.permissionsAssigned++;
+      result.userCreated = true;
+    } else {
+      result.userAlreadyExisted = true;
+    }
+
+    // 3. Assign all permissions to admin (skip if already assigned)
+    const allPermissions = await this.prisma.permission.findMany();
+    for (const permission of allPermissions) {
+      const existing = await this.prisma.userPermission.findUnique({
+        where: {
+          userId_permissionId: {
+            userId: adminUser.id,
+            permissionId: permission.id,
+          },
+        },
+      });
+
+      if (!existing) {
+        await this.prisma.userPermission.create({
+          data: {
+            userId: adminUser.id,
+            permissionId: permission.id,
+            assignedBy: 'system',
+          },
+        });
+        result.permissionsAssigned++;
+      }
     }
 
     return {
-      message: 'Initial setup completed successfully',
+      message: 'Setup completed successfully',
       email: 'admin@lumono.com',
-      password: 'admin123',
-      note: 'IMPORTANT: Change the password after first login!',
+      password: result.userCreated ? 'admin123' : '(existing user - password unchanged)',
+      note: result.userCreated 
+        ? 'IMPORTANT: Change the password after first login!' 
+        : 'User already existed. Re-login to refresh permissions.',
       ...result,
     };
   }
