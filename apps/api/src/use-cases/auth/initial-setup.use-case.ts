@@ -106,7 +106,6 @@ export class InitialSetupUseCase {
           data: {
             userId: adminUser.id,
             permissionId: permission.id,
-            assignedBy: 'system',
           },
         });
         result.permissionsAssigned++;
