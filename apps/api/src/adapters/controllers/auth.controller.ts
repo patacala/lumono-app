@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator';
 import { LoginUseCase } from '@/use-cases/auth/login.use-case';
 import { RefreshTokenUseCase } from '@/use-cases/auth/refresh-token.use-case';
+import { SetupAdminUseCase } from '@/use-cases/auth/setup-admin.use-case';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 class LoginDto {
@@ -26,6 +27,7 @@ export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    private readonly setupAdminUseCase: SetupAdminUseCase,
   ) {}
 
   @Public()
@@ -40,6 +42,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() dto: RefreshTokenDto) {
     return this.refreshTokenUseCase.execute(dto.refreshToken);
+  }
+
+  @Public()
+  @Post('setup-admin')
+  @HttpCode(HttpStatus.CREATED)
+  async setupAdmin() {
+    return this.setupAdminUseCase.execute();
   }
 }
 
