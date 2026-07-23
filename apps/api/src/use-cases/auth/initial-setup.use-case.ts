@@ -90,7 +90,9 @@ export class InitialSetupUseCase {
     }
 
     // 3. Assign all permissions to admin (skip if already assigned)
-    const allPermissions = await this.prisma.permission.findMany();
+    // NOTE: pass {} explicitly - the soft-delete middleware in PrismaService
+    // reads params.args.where, which throws if args is undefined (no-arg findMany).
+    const allPermissions = await this.prisma.permission.findMany({});
     for (const permission of allPermissions) {
       const existing = await this.prisma.userPermission.findUnique({
         where: {
