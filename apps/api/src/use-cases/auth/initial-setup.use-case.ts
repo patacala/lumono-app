@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/infrastructure/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
+// NOTE: PrismaService applies a global middleware that rewrites every
+// findUnique into findFirst (for soft-delete filtering). findFirst does not
+// support Prisma's compound-unique object syntax (e.g. `userId_permissionId`),
+// so this use case intentionally avoids findUnique/compound keys everywhere
+// and only queries by plain scalar fields.
 @Injectable()
 export class InitialSetupUseCase {
   constructor(private readonly prisma: PrismaService) {}
@@ -57,7 +62,7 @@ export class InitialSetupUseCase {
     ];
 
     for (const permission of permissions) {
-      const existing = await this.prisma.permission.findUnique({
+      const existing = await this.prisma.permission.findFirst({
         where: { name: permission.name },
       });
 
@@ -70,7 +75,7 @@ export class InitialSetupUseCase {
     }
 
     // 2. Find or create admin user
-    let adminUser = await this.prisma.user.findUnique({
+    let adminUser = await this.prisma.user.findFirst({
       where: { email: 'admin@lumono.com' },
     });
 
@@ -90,16 +95,12 @@ export class InitialSetupUseCase {
     }
 
     // 3. Assign all permissions to admin (skip if already assigned)
-    // NOTE: pass {} explicitly - the soft-delete middleware in PrismaService
-    // reads params.args.where, which throws if args is undefined (no-arg findMany).
     const allPermissions = await this.prisma.permission.findMany({});
     for (const permission of allPermissions) {
-      const existing = await this.prisma.userPermission.findUnique({
+      const existing = await this.prisma.userPermission.findFirst({
         where: {
-          userId_permissionId: {
-            userId: adminUser.id,
-            permissionId: permission.id,
-          },
+          userId: adminUser.id,
+          permissionId: permission.id,
         },
       });
 
@@ -118,8 +119,8 @@ export class InitialSetupUseCase {
       message: 'Setup completed successfully',
       email: 'admin@lumono.com',
       password: result.userCreated ? 'admin123' : '(existing user - password unchanged)',
-      note: result.userCreated 
-        ? 'IMPORTANT: Change the password after first login!' 
+      note: result.userCreated
+        ? 'IMPORTANT: Change the password after first login!'
         : 'User already existed. Re-login to refresh permissions.',
       ...result,
     };
