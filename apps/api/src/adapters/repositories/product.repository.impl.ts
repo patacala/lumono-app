@@ -167,13 +167,14 @@ export class ProductRepositoryImpl implements IProductRepository {
       maxStock?: number;
       supplierId?: string;
       categoryId?: string;
+      locationId?: string;
       expiringBefore?: Date;
       sortBy?: 'name' | 'sku' | 'unitPrice' | 'createdAt';
       sortOrder?: 'asc' | 'desc';
     }
   ): Promise<{ products: Product[]; total: number }> {
     const { skip, limit } = pagination;
-    const { search, minStock, maxStock, supplierId, categoryId, expiringBefore, sortBy = 'name', sortOrder = 'asc' } = filters || {};
+    const { search, minStock, maxStock, supplierId, categoryId, locationId, expiringBefore, sortBy = 'name', sortOrder = 'asc' } = filters || {};
 
     // Build WHERE conditions
     const whereConditions: string[] = ['p."deletedAt" IS NULL'];
@@ -219,6 +220,31 @@ export class ProductRepositoryImpl implements IProductRepository {
     };
     const orderBy = `${orderByMap[sortBy]} ${sortOrder.toUpperCase()}`;
 
+    // Stock CASE: scoped to a single location when locationId is provided,
+    // otherwise the product's total stock across every location.
+    let stockCaseSql: string;
+    if (locationId) {
+      params.push(locationId);
+      const locIdx = params.length;
+      stockCaseSql = `
+            WHEN im.type = 'IN' AND im."destLocationId" = $${locIdx} THEN im.quantity
+            WHEN im.type = 'OUT' AND im."originLocationId" = $${locIdx} THEN -im.quantity
+            WHEN im.type = 'TRANSFER' AND im."destLocationId" = $${locIdx} THEN im.quantity
+            WHEN im.type = 'TRANSFER' AND im."originLocationId" = $${locIdx} THEN -im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" = $${locIdx} THEN im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" = $${locIdx} THEN -im.quantity
+            ELSE 0`;
+    } else {
+      stockCaseSql = `
+            WHEN im.type = 'IN' THEN im.quantity
+            WHEN im.type = 'OUT' THEN -im.quantity
+            WHEN im.type = 'TRANSFER' AND im."destLocationId" IS NOT NULL THEN im.quantity
+            WHEN im.type = 'TRANSFER' AND im."originLocationId" IS NOT NULL THEN -im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" IS NOT NULL THEN im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" IS NOT NULL THEN -im.quantity
+            ELSE 0`;
+    }
+
     // Get paginated products with stock, supplier name, and category name
     params.push(limit, skip);
     const query = `
@@ -228,13 +254,7 @@ export class ProductRepositoryImpl implements IProductRepository {
         c.name as "categoryName",
         COALESCE(SUM(
           CASE
-            WHEN im.type = 'IN' THEN im.quantity
-            WHEN im.type = 'OUT' THEN -im.quantity
-            WHEN im.type = 'TRANSFER' AND im."destLocationId" IS NOT NULL THEN im.quantity
-            WHEN im.type = 'TRANSFER' AND im."originLocationId" IS NOT NULL THEN -im.quantity
-            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" IS NOT NULL THEN im.quantity
-            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" IS NOT NULL THEN -im.quantity
-            ELSE 0
+            ${stockCaseSql}
           END
         ), 0)::int as "totalStock"
       FROM products p
@@ -246,13 +266,7 @@ export class ProductRepositoryImpl implements IProductRepository {
       ${minStock !== undefined || maxStock !== undefined ?
         `HAVING COALESCE(SUM(
           CASE
-            WHEN im.type = 'IN' THEN im.quantity
-            WHEN im.type = 'OUT' THEN -im.quantity
-            WHEN im.type = 'TRANSFER' AND im."destLocationId" IS NOT NULL THEN im.quantity
-            WHEN im.type = 'TRANSFER' AND im."originLocationId" IS NOT NULL THEN -im.quantity
-            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" IS NOT NULL THEN im.quantity
-            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" IS NOT NULL THEN -im.quantity
-            ELSE 0
+            ${stockCaseSql}
           END
         ), 0) ${minStock !== undefined ? `>= ${minStock}` : ''} ${minStock !== undefined && maxStock !== undefined ? 'AND' : ''} ${maxStock !== undefined ? `<= ${maxStock}` : ''}`
         : ''}

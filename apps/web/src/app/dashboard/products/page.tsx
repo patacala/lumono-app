@@ -11,6 +11,7 @@ import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { DataTable } from '@/shared/components/ui/data-table';
 import { useProducts, Product } from '@/modules/products/hooks/use-products';
 import { useCategories, Category } from '@/modules/categories/hooks/use-categories';
+import { useLocations } from '@/modules/locations/hooks/use-locations';
 import { ProductModal } from '@/modules/products/components/product-modal';
 import { CsvImportModal } from '@/modules/products/components/csv-import-modal';
 import { CategoryModal } from '@/modules/categories/components/category-modal';
@@ -52,6 +53,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 350);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
   const [page, setPage] = useState(1);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -64,9 +66,11 @@ export default function ProductsPage() {
     limit: 20,
     search: debouncedSearch || undefined,
     categoryId: selectedCategory || undefined,
+    locationId: selectedLocation || undefined,
   });
 
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const { data: locations } = useLocations();
 
   const canCreate = hasPermission('product.create');
   const canUpdate = hasPermission('product.update');
@@ -93,6 +97,13 @@ export default function ProductsPage() {
     { value: '', label: 'Todas las categorias' },
     ...(categories?.map((c) => ({ value: c.id, label: c.name })) || []),
   ];
+
+  const locationOptions = [
+    { value: '', label: 'Todas las ubicaciones' },
+    ...(locations?.map((l) => ({ value: l.id, label: l.name })) || []),
+  ];
+
+  const selectedLocationName = locations?.find((l) => l.id === selectedLocation)?.name;
 
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
@@ -145,7 +156,7 @@ export default function ProductsPage() {
       },
       {
         accessorKey: 'totalStock',
-        header: 'Stock Actual',
+        header: selectedLocationName ? `Stock en ${selectedLocationName}` : 'Stock Actual',
         cell: ({ getValue }) => (
           <span className="font-semibold tabular-nums">{getValue() ?? 0}</span>
         ),
@@ -209,7 +220,7 @@ export default function ProductsPage() {
           ]
         : []),
     ],
-    [canUpdate],
+    [canUpdate, selectedLocationName],
   );
 
   const categoryColumns = useMemo<ColumnDef<Category, any>[]>(
@@ -364,6 +375,16 @@ export default function ProductsPage() {
                       setPage(1);
                     }}
                     options={categoryOptions}
+                  />
+                </div>
+                <div className="w-full sm:w-64">
+                  <Select
+                    value={selectedLocation}
+                    onChange={(e) => {
+                      setSelectedLocation(e.target.value);
+                      setPage(1);
+                    }}
+                    options={locationOptions}
                   />
                 </div>
               </div>

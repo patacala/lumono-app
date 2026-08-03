@@ -52,6 +52,7 @@ export interface ProductFilters {
   maxStock?: number;
   supplierId?: string;
   categoryId?: string;
+  locationId?: string;
   expiringBefore?: string;
   sortBy?: 'name' | 'sku' | 'unitPrice' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
@@ -92,6 +93,7 @@ export function useProducts(filters?: ProductFilters) {
     if (filters.maxStock !== undefined) queryParams.append('maxStock', filters.maxStock.toString());
     if (filters.supplierId) queryParams.append('supplierId', filters.supplierId);
     if (filters.categoryId) queryParams.append('categoryId', filters.categoryId);
+    if (filters.locationId) queryParams.append('locationId', filters.locationId);
     if (filters.expiringBefore) queryParams.append('expiringBefore', filters.expiringBefore);
     if (filters.sortBy) queryParams.append('sortBy', filters.sortBy);
     if (filters.sortOrder) queryParams.append('sortOrder', filters.sortOrder);
