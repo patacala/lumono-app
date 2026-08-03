@@ -141,6 +141,8 @@ export class ProductRepositoryImpl implements IProductRepository {
             WHEN im.type = 'OUT' THEN -im.quantity
             WHEN im.type = 'TRANSFER' AND im."destLocationId" IS NOT NULL THEN im.quantity
             WHEN im.type = 'TRANSFER' AND im."originLocationId" IS NOT NULL THEN -im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" IS NOT NULL THEN im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" IS NOT NULL THEN -im.quantity
             ELSE 0
           END
         ), 0)::int as "totalStock"
@@ -230,6 +232,8 @@ export class ProductRepositoryImpl implements IProductRepository {
             WHEN im.type = 'OUT' THEN -im.quantity
             WHEN im.type = 'TRANSFER' AND im."destLocationId" IS NOT NULL THEN im.quantity
             WHEN im.type = 'TRANSFER' AND im."originLocationId" IS NOT NULL THEN -im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" IS NOT NULL THEN im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" IS NOT NULL THEN -im.quantity
             ELSE 0
           END
         ), 0)::int as "totalStock"
@@ -246,6 +250,8 @@ export class ProductRepositoryImpl implements IProductRepository {
             WHEN im.type = 'OUT' THEN -im.quantity
             WHEN im.type = 'TRANSFER' AND im."destLocationId" IS NOT NULL THEN im.quantity
             WHEN im.type = 'TRANSFER' AND im."originLocationId" IS NOT NULL THEN -im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" IS NOT NULL THEN im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" IS NOT NULL THEN -im.quantity
             ELSE 0
           END
         ), 0) ${minStock !== undefined ? `>= ${minStock}` : ''} ${minStock !== undefined && maxStock !== undefined ? 'AND' : ''} ${maxStock !== undefined ? `<= ${maxStock}` : ''}`
@@ -282,6 +288,8 @@ export class ProductRepositoryImpl implements IProductRepository {
               WHEN im.type = 'OUT' AND im."originLocationId" = l.id THEN -im.quantity
               WHEN im.type = 'TRANSFER' AND im."destLocationId" = l.id THEN im.quantity
               WHEN im.type = 'TRANSFER' AND im."originLocationId" = l.id THEN -im.quantity
+              WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" = l.id THEN im.quantity
+              WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" = l.id THEN -im.quantity
               ELSE 0
             END
           ), 0
@@ -299,6 +307,8 @@ export class ProductRepositoryImpl implements IProductRepository {
             WHEN im.type = 'OUT' AND im."originLocationId" = l.id THEN -im.quantity
             WHEN im.type = 'TRANSFER' AND im."destLocationId" = l.id THEN im.quantity
             WHEN im.type = 'TRANSFER' AND im."originLocationId" = l.id THEN -im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."destLocationId" = l.id THEN im.quantity
+            WHEN im.type = 'ADJUSTMENT' AND im."originLocationId" = l.id THEN -im.quantity
             ELSE 0
           END
         ), 0

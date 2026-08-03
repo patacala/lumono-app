@@ -32,7 +32,12 @@
       "Bash(awk '/model InventoryMovement/,/^}/' apps/api/prisma/schema.prisma)",
       "Bash(awk '/model User /,/^}/' apps/api/prisma/schema.prisma)",
       "Bash(awk '/model Location /,/^}/' apps/api/prisma/schema.prisma)",
-      "Bash(graphify update *)"
+      "Bash(graphify update *)",
+      "Bash(docker exec lumono-postgres-1 psql -U lumono -d lumono_inventory -c '\\\\copy \\( *)",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/**)",
+      "Bash(mv /Users/peterbarranco/Desktop/lumono/productos_sin_stock.csv /Users/peterbarranco/Desktop/productos_sin_stock.csv)",
+      "Read(//Users/peterbarranco/Desktop/**)"
     ]
   },
   "hooks": {

@@ -302,6 +302,7 @@ export class InventoryController {
     @Query('type') type?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('search') search?: string,
   ) {
     // If pagination params provided, use paginated query
     if (page || limit) {
@@ -311,6 +312,7 @@ export class InventoryController {
         type: type as any,
         productId,
         locationId,
+        search,
       });
     }
 

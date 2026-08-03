@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/shared/lib/api-client';
 import { toast } from 'sonner';
 
@@ -109,6 +109,7 @@ export function useInventoryMovementsPaginated(params: {
   type?: string;
   productId?: string;
   locationId?: string;
+  search?: string;
 }) {
   const searchParams = new URLSearchParams();
   searchParams.append('page', String(params.page || 1));
@@ -116,11 +117,13 @@ export function useInventoryMovementsPaginated(params: {
   if (params.type && params.type !== 'ALL') searchParams.append('type', params.type);
   if (params.productId) searchParams.append('productId', params.productId);
   if (params.locationId) searchParams.append('locationId', params.locationId);
+  if (params.search) searchParams.append('search', params.search);
 
   return useQuery({
     queryKey: ['inventory-movements', 'paginated', params],
     queryFn: () =>
       apiClient.get<PaginatedMovements>(`/inventory/movements?${searchParams.toString()}`),
+    placeholderData: keepPreviousData,
   });
 }
 

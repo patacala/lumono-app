@@ -34,6 +34,7 @@ export interface FindAllPaginatedParams {
   type?: InventoryMovementType;
   locationId?: string;
   productId?: string;
+  search?: string;
 }
 
 export interface IInventoryMovementRepository {

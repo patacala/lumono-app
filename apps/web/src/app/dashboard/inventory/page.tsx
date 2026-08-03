@@ -13,6 +13,7 @@ import { TransferModal } from '@/modules/inventory/components/transfer-modal';
 import { AdjustmentModal } from '@/modules/inventory/components/adjustment-modal';
 import { MovementCsvImportModal } from '@/modules/inventory/components/movement-csv-import-modal';
 import { downloadExcelReport } from '@/modules/reports/hooks/use-reports';
+import { useDebounce } from '@/shared/hooks/use-debounce';
 import Link from 'next/link';
 import { PackagePlus, PackageMinus, ArrowLeftRight, SlidersHorizontal, Upload } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
@@ -73,11 +74,14 @@ const FILTER_TABS = [
 export default function InventoryPage() {
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 350);
 
   const { data, isLoading, error } = useInventoryMovementsPaginated({
     page,
     limit: 20,
     type: typeFilter !== 'ALL' ? typeFilter : undefined,
+    search: debouncedSearch || undefined,
   });
 
   const [showInModal, setShowInModal] = useState(false);
@@ -193,7 +197,7 @@ export default function InventoryPage() {
     []
   );
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-[var(--muted)]">Cargando movimientos...</div>
@@ -287,10 +291,23 @@ export default function InventoryPage() {
         </CardHeader>
 
         <CardBody className="p-0 sm:p-4">
+          <div className="mb-4">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Buscar por producto, SKU, referencia o notas..."
+              className="px-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--fg)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] w-full sm:w-96 text-sm"
+            />
+          </div>
           <DataTable
             data={movements}
             columns={columns}
-            searchPlaceholder="Buscar movimientos..."
+            showSearch={false}
+            showPagination={false}
           />
         </CardBody>
       </Card>

@@ -62,14 +62,29 @@ export class InventoryMovementRepositoryImpl implements IInventoryMovementReposi
     const skip = (page - 1) * limit;
 
     const where: any = {};
+    const and: any[] = [];
     if (params.type) where.type = params.type;
     if (params.productId) where.productId = params.productId;
     if (params.locationId) {
-      where.OR = [
-        { originLocationId: params.locationId },
-        { destLocationId: params.locationId },
-      ];
+      and.push({
+        OR: [
+          { originLocationId: params.locationId },
+          { destLocationId: params.locationId },
+        ],
+      });
     }
+    if (params.search?.trim()) {
+      const term = params.search.trim();
+      and.push({
+        OR: [
+          { product: { name: { contains: term, mode: 'insensitive' } } },
+          { product: { sku: { contains: term, mode: 'insensitive' } } },
+          { referenceDocument: { contains: term, mode: 'insensitive' } },
+          { notes: { contains: term, mode: 'insensitive' } },
+        ],
+      });
+    }
+    if (and.length) where.AND = and;
 
     const [data, total] = await Promise.all([
       this.prisma.inventoryMovement.findMany({
