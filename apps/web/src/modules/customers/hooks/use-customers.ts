@@ -79,6 +79,32 @@ export function useUpdateCustomer() {
   });
 }
 
+export interface BulkCustomerRow {
+  code?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  taxId?: string;
+}
+
+export interface ImportCustomersResult {
+  created: number;
+  errors: { row: number; message: string }[];
+}
+
+export function useImportCustomers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (customers: BulkCustomerRow[]) =>
+      apiClient.post<ImportCustomersResult>('/customers/import', { customers }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
+}
+
 export function useDeleteCustomer() {
   const queryClient = useQueryClient();
 

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/shared/lib/api-client';
 
 export interface StockByLocation {
@@ -103,6 +103,7 @@ export function useProducts(filters?: ProductFilters) {
   return useQuery({
     queryKey: ['products', filters],
     queryFn: () => apiClient.get<PaginatedResponse<Product>>(endpoint),
+    placeholderData: keepPreviousData,
   });
 }
 

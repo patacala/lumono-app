@@ -93,30 +93,6 @@ export function LoginForm() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-[var(--border)]">
-              <div className="bg-[var(--surface-2)] rounded-xl p-4 border border-[var(--border)]">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-surface-300 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-surface-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-surface-900 mb-2">Credenciales de prueba:</p>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-surface-700 font-medium">Email:</span>
-                        <code className="text-xs font-mono text-surface-900 bg-surface-300 px-2 py-0.5 rounded">admin@lumono.com</code>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-surface-700 font-medium">Password:</span>
-                        <code className="text-xs font-mono text-surface-900 bg-surface-300 px-2 py-0.5 rounded">admin123</code>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </CardBody>
         </Card>
 

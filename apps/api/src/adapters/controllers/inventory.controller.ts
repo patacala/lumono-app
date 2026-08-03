@@ -7,7 +7,8 @@ import {
   Param,
   Inject,
 } from '@nestjs/common';
-import { IsString, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, IsArray, ValidateNested, IsIn } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -17,6 +18,7 @@ import { TransferInventoryUseCase } from '@/use-cases/inventory/transfer-invento
 import { GetStockUseCase } from '@/use-cases/inventory/get-stock.use-case';
 import { RegisterAdjustmentUseCase } from '@/use-cases/inventory/register-adjustment.use-case';
 import { GetMovementByIdUseCase } from '@/use-cases/inventory/get-movement-by-id.use-case';
+import { BulkRegisterMovementsUseCase } from '@/use-cases/inventory/bulk-register-movements.use-case';
 import { IInventoryMovementRepository } from '@/domain/ports/repositories/inventory-movement.repository';
 import { StockGateway } from '@/adapters/gateways/stock.gateway';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -131,6 +133,39 @@ class RegisterAdjustmentDto {
   notes?: string;
 }
 
+class BulkMovementRowDto {
+  @IsString()
+  @IsNotEmpty()
+  sku: string;
+
+  @IsString()
+  @IsNotEmpty()
+  locationName: string;
+
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+
+  @IsIn(['ADJUSTMENT', 'IN'])
+  @IsOptional()
+  type?: 'ADJUSTMENT' | 'IN';
+
+  @IsString()
+  @IsOptional()
+  reason?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
+class BulkMovementImportDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BulkMovementRowDto)
+  movements: BulkMovementRowDto[];
+}
+
 @ApiTags('Inventory')
 @ApiBearerAuth()
 @Controller('inventory')
@@ -144,6 +179,7 @@ export class InventoryController {
     private readonly getStockUseCase: GetStockUseCase,
     private readonly registerAdjustmentUseCase: RegisterAdjustmentUseCase,
     private readonly getMovementByIdUseCase: GetMovementByIdUseCase,
+    private readonly bulkRegisterMovementsUseCase: BulkRegisterMovementsUseCase,
     private readonly stockGateway: StockGateway,
     @InjectQueue('stock-alerts') private readonly stockAlertsQueue: Queue,
   ) {}
@@ -219,6 +255,25 @@ export class InventoryController {
     });
     await this.stockAlertsQueue.add('check', { productId: dto.productId });
     return movement;
+  }
+
+  @Post('movements/import')
+  @RequirePermissions('inventory.adjust')
+  async importMovements(
+    @Body() dto: BulkMovementImportDto,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.bulkRegisterMovementsUseCase.execute(
+      dto.movements.map((m) => ({
+        sku: m.sku,
+        locationName: m.locationName,
+        quantity: m.quantity,
+        type: m.type,
+        reason: m.reason as any,
+        notes: m.notes,
+      })),
+      userId,
+    );
   }
 
   @Get('stock')

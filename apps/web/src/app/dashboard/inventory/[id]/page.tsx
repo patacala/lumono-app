@@ -148,31 +148,34 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
               </p>
             </div>
 
-            {movement.createdBy && (
+            {(movement.createdByName || movement.createdBy) && (
               <div>
                 <label className="text-sm font-medium text-surface-600">Creado Por</label>
-                <p className="mt-1 text-white">{movement.createdBy}</p>
+                <p className="mt-1 text-white">{movement.createdByName || movement.createdBy}</p>
               </div>
             )}
 
             {movement.productId && (
               <div>
-                <label className="text-sm font-medium text-surface-600">Producto ID</label>
-                <p className="mt-1 text-white font-mono text-sm">{movement.productId}</p>
+                <label className="text-sm font-medium text-surface-600">Producto</label>
+                <p className="mt-1 text-white">{movement.productName || movement.productId}</p>
+                {movement.productSku && (
+                  <p className="text-xs text-surface-600 font-mono">{movement.productSku}</p>
+                )}
               </div>
             )}
 
             {movement.originLocationId && (
               <div>
                 <label className="text-sm font-medium text-surface-600">Ubicacion Origen</label>
-                <p className="mt-1 text-white font-mono text-sm">{movement.originLocationId}</p>
+                <p className="mt-1 text-white">{movement.originLocationName || movement.originLocationId}</p>
               </div>
             )}
 
             {movement.destLocationId && (
               <div>
                 <label className="text-sm font-medium text-surface-600">Ubicacion Destino</label>
-                <p className="mt-1 text-white font-mono text-sm">{movement.destLocationId}</p>
+                <p className="mt-1 text-white">{movement.destLocationName || movement.destLocationId}</p>
               </div>
             )}
           </CardBody>

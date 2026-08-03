@@ -33,6 +33,11 @@ export interface InventoryMovement {
   reason?: AdjustmentReason;
   createdAt: string;
   createdBy?: string;
+  productName?: string;
+  productSku?: string;
+  originLocationName?: string;
+  destLocationName?: string;
+  createdByName?: string;
 }
 
 export interface PaginatedMovements {
@@ -202,6 +207,35 @@ export function useRegisterAdjustment() {
     },
     onError: (err: any) => {
       toast.error(err.message || 'Error al registrar ajuste');
+    },
+  });
+}
+
+export interface BulkMovementRow {
+  sku: string;
+  locationName: string;
+  quantity: number;
+  type?: 'ADJUSTMENT' | 'IN';
+  reason?: AdjustmentReason;
+  notes?: string;
+}
+
+export interface ImportMovementsResult {
+  created: number;
+  errors: { row: number; message: string }[];
+}
+
+export function useImportMovements() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (movements: BulkMovementRow[]) =>
+      apiClient.post<ImportMovementsResult>('/inventory/movements/import', { movements }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
+      queryClient.invalidateQueries({ queryKey: ['today-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 }

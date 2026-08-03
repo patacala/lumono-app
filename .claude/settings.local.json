@@ -27,7 +27,12 @@
       "Bash(npx tsc:*)",
       "Bash(graphify query:*)",
       "Bash(git stash:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(docker exec *)",
+      "Bash(awk '/model InventoryMovement/,/^}/' apps/api/prisma/schema.prisma)",
+      "Bash(awk '/model User /,/^}/' apps/api/prisma/schema.prisma)",
+      "Bash(awk '/model Location /,/^}/' apps/api/prisma/schema.prisma)",
+      "Bash(graphify update *)"
     ]
   },
   "hooks": {

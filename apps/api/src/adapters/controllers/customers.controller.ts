@@ -2,7 +2,8 @@ import {
   Controller, Get, Post, Put, Delete, Body, Param,
   HttpCode, HttpStatus, Inject,
 } from '@nestjs/common';
-import { IsString, IsNotEmpty, IsOptional, IsEmail, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEmail, IsNumber, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/permissions.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -10,6 +11,7 @@ import { ICustomerRepository } from '@/domain/ports/repositories/customer.reposi
 import { CreateCustomerUseCase } from '@/use-cases/customers/create-customer.use-case';
 import { UpdateCustomerUseCase } from '@/use-cases/customers/update-customer.use-case';
 import { DeleteCustomerUseCase } from '@/use-cases/customers/delete-customer.use-case';
+import { BulkCreateCustomersUseCase } from '@/use-cases/customers/bulk-create-customers.use-case';
 
 class CreateCustomerDto {
   @IsString() @IsNotEmpty() code: string;
@@ -29,6 +31,22 @@ class UpdateCustomerDto {
   @IsNumber() @IsNotEmpty() version: number;
 }
 
+class ImportCustomerRowDto {
+  @IsString() @IsOptional() code?: string;
+  @IsString() @IsNotEmpty() name: string;
+  @IsString() @IsOptional() email?: string;
+  @IsString() @IsOptional() phone?: string;
+  @IsString() @IsOptional() address?: string;
+  @IsString() @IsOptional() taxId?: string;
+}
+
+class BulkImportCustomersDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImportCustomerRowDto)
+  customers: ImportCustomerRowDto[];
+}
+
 @ApiTags('Customers')
 @ApiBearerAuth()
 @Controller('customers')
@@ -39,6 +57,7 @@ export class CustomersController {
     private readonly createCustomerUseCase: CreateCustomerUseCase,
     private readonly updateCustomerUseCase: UpdateCustomerUseCase,
     private readonly deleteCustomerUseCase: DeleteCustomerUseCase,
+    private readonly bulkCreateCustomersUseCase: BulkCreateCustomersUseCase,
   ) {}
 
   @Get()
@@ -57,6 +76,12 @@ export class CustomersController {
   @RequirePermissions('customer.create')
   async create(@Body() dto: CreateCustomerDto, @CurrentUser('sub') userId: string) {
     return this.createCustomerUseCase.execute({ ...dto, createdBy: userId });
+  }
+
+  @Post('import')
+  @RequirePermissions('customer.create')
+  async import(@Body() dto: BulkImportCustomersDto, @CurrentUser('sub') userId: string) {
+    return this.bulkCreateCustomersUseCase.execute(dto.customers, userId);
   }
 
   @Put(':id')

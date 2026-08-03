@@ -11,9 +11,10 @@ import { InventoryInModal } from '@/modules/inventory/components/inventory-in-mo
 import { InventoryOutModal } from '@/modules/inventory/components/inventory-out-modal';
 import { TransferModal } from '@/modules/inventory/components/transfer-modal';
 import { AdjustmentModal } from '@/modules/inventory/components/adjustment-modal';
+import { MovementCsvImportModal } from '@/modules/inventory/components/movement-csv-import-modal';
 import { downloadExcelReport } from '@/modules/reports/hooks/use-reports';
 import Link from 'next/link';
-import { PackagePlus, PackageMinus, ArrowLeftRight, SlidersHorizontal } from 'lucide-react';
+import { PackagePlus, PackageMinus, ArrowLeftRight, SlidersHorizontal, Upload } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 
 const TYPE_BADGES: Record<string, { variant: 'success' | 'danger' | 'info' | 'neutral'; label: string }> = {
@@ -83,6 +84,7 @@ export default function InventoryPage() {
   const [showOutModal, setShowOutModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   function handleActionClick(key: string) {
     switch (key) {
@@ -115,6 +117,43 @@ export default function InventoryPage() {
         cell: ({ getValue }) => {
           const subType = getValue() as string;
           return subType ? SUB_TYPE_LABELS[subType] || subType : '-';
+        },
+      },
+      {
+        id: 'product',
+        header: 'Producto',
+        cell: ({ row }) => {
+          const m = row.original;
+          return m.productName ? (
+            <div className="max-w-[16rem]">
+              <p className="truncate text-[var(--fg)]">{m.productName}</p>
+              {m.productSku && (
+                <p className="text-xs text-[var(--muted)] font-mono">{m.productSku}</p>
+              )}
+            </div>
+          ) : (
+            <span className="text-[var(--muted)]">-</span>
+          );
+        },
+      },
+      {
+        id: 'location',
+        header: 'Ubicacion',
+        cell: ({ row }) => {
+          const m = row.original;
+          if (m.type === 'TRANSFER' && m.originLocationName && m.destLocationName) {
+            return (
+              <span className="text-sm text-[var(--fg)]">
+                {m.originLocationName} <span className="text-[var(--muted)]">&rarr;</span> {m.destLocationName}
+              </span>
+            );
+          }
+          const loc = m.destLocationName || m.originLocationName;
+          return loc ? (
+            <span className="text-sm text-[var(--fg)]">{loc}</span>
+          ) : (
+            <span className="text-[var(--muted)]">-</span>
+          );
         },
       },
       {
@@ -184,6 +223,14 @@ export default function InventoryPage() {
           <p className="text-[var(--muted)]">Registro de todos los movimientos de inventario</p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowImportModal(true)}
+          >
+            <Upload className="w-4 h-4" />
+            Carga masiva
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -281,6 +328,7 @@ export default function InventoryPage() {
       <InventoryOutModal isOpen={showOutModal} onClose={() => setShowOutModal(false)} />
       <TransferModal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} />
       <AdjustmentModal isOpen={showAdjustmentModal} onClose={() => setShowAdjustmentModal(false)} />
+      <MovementCsvImportModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} />
     </div>
   );
 }

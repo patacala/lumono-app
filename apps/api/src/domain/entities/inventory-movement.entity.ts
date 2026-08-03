@@ -33,6 +33,13 @@ export interface InventoryMovement {
   createdAt: Date;
   createdBy?: string;
   version: number;
+
+  // Optional denormalized display fields (populated when relations are included)
+  productName?: string;
+  productSku?: string;
+  originLocationName?: string;
+  destLocationName?: string;
+  createdByName?: string;
 }
 
 export type InventoryMovementType = InventoryMovement['type'];

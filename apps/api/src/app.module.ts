@@ -59,12 +59,14 @@ import { TransferInventoryUseCase } from './use-cases/inventory/transfer-invento
 import { GetStockUseCase } from './use-cases/inventory/get-stock.use-case';
 import { RegisterAdjustmentUseCase } from './use-cases/inventory/register-adjustment.use-case';
 import { GetMovementByIdUseCase } from './use-cases/inventory/get-movement-by-id.use-case';
+import { BulkRegisterMovementsUseCase } from './use-cases/inventory/bulk-register-movements.use-case';
 import { CreateCategoryUseCase } from './use-cases/categories/create-category.use-case';
 import { UpdateCategoryUseCase } from './use-cases/categories/update-category.use-case';
 import { DeleteCategoryUseCase } from './use-cases/categories/delete-category.use-case';
 import { CreateCustomerUseCase } from './use-cases/customers/create-customer.use-case';
 import { UpdateCustomerUseCase } from './use-cases/customers/update-customer.use-case';
 import { DeleteCustomerUseCase } from './use-cases/customers/delete-customer.use-case';
+import { BulkCreateCustomersUseCase } from './use-cases/customers/bulk-create-customers.use-case';
 import { CreatePurchaseOrderUseCase } from './use-cases/purchase-orders/create-purchase-order.use-case';
 import { UpdatePurchaseOrderStatusUseCase } from './use-cases/purchase-orders/update-purchase-order-status.use-case';
 import { ReceivePurchaseOrderUseCase } from './use-cases/purchase-orders/receive-purchase-order.use-case';
@@ -206,12 +208,14 @@ const LOT_REPOSITORY = 'ILotRepository';
     GetStockUseCase,
     RegisterAdjustmentUseCase,
     GetMovementByIdUseCase,
+    BulkRegisterMovementsUseCase,
     CreateCategoryUseCase,
     UpdateCategoryUseCase,
     DeleteCategoryUseCase,
     CreateCustomerUseCase,
     UpdateCustomerUseCase,
     DeleteCustomerUseCase,
+    BulkCreateCustomersUseCase,
     CreatePurchaseOrderUseCase,
     UpdatePurchaseOrderStatusUseCase,
     ReceivePurchaseOrderUseCase,

@@ -3,12 +3,13 @@
 import { useState, useMemo } from 'react';
 import { useCustomers, useDeleteCustomer, Customer } from '@/modules/customers/hooks/use-customers';
 import { CustomerModal } from '@/modules/customers/components/customer-modal';
+import { CustomerCsvImportModal } from '@/modules/customers/components/customer-csv-import-modal';
 import { Card, CardBody } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { DataTable } from '@/shared/components/ui/data-table';
 import { Modal, ModalFooter } from '@/shared/components/ui/modal';
 import { useAuth } from '@/modules/auth/context/auth-context';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, Upload } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 
@@ -24,6 +25,7 @@ export default function CustomersPage() {
   const deleteMutation = useDeleteCustomer();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
 
@@ -162,10 +164,16 @@ export default function CustomersPage() {
           <p className="text-[var(--muted)]">Gestiona tus clientes</p>
         </div>
         {canCreate && (
-          <Button onClick={handleCreate}>
-            <Plus className="w-4 h-4" />
-            Nuevo Cliente
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4" />
+              Importar CSV
+            </Button>
+            <Button onClick={handleCreate}>
+              <Plus className="w-4 h-4" />
+              Nuevo Cliente
+            </Button>
+          </div>
         )}
       </div>
 
@@ -198,6 +206,8 @@ export default function CustomersPage() {
         }}
         customer={editingCustomer}
       />
+
+      <CustomerCsvImportModal isOpen={importOpen} onClose={() => setImportOpen(false)} />
 
       <Modal
         isOpen={!!deletingCustomer}

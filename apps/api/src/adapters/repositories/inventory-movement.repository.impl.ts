@@ -9,6 +9,13 @@ import {
 } from '@/domain/ports/repositories/inventory-movement.repository';
 import { InventoryMovement } from '@/domain/entities/inventory-movement.entity';
 
+const MOVEMENT_DISPLAY_INCLUDE = {
+  product: { select: { name: true, sku: true } },
+  originLocation: { select: { name: true } },
+  destLocation: { select: { name: true } },
+  userCreatedBy: { select: { name: true } },
+} as const;
+
 @Injectable()
 export class InventoryMovementRepositoryImpl implements IInventoryMovementRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -23,6 +30,7 @@ export class InventoryMovementRepositoryImpl implements IInventoryMovementReposi
   async findById(id: string): Promise<InventoryMovement | null> {
     const movement = await this.prisma.inventoryMovement.findUnique({
       where: { id },
+      include: MOVEMENT_DISPLAY_INCLUDE,
     });
     return movement ? this.mapToEntity(movement) : null;
   }
@@ -69,6 +77,7 @@ export class InventoryMovementRepositoryImpl implements IInventoryMovementReposi
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
+        include: MOVEMENT_DISPLAY_INCLUDE,
       }),
       this.prisma.inventoryMovement.count({ where }),
     ]);
@@ -215,9 +224,15 @@ export class InventoryMovementRepositoryImpl implements IInventoryMovementReposi
   }
 
   private mapToEntity(movement: any): InventoryMovement {
+    const { product, originLocation, destLocation, userCreatedBy, ...rest } = movement;
     return {
-      ...movement,
+      ...rest,
       unitPrice: movement.unitPrice ? parseFloat(movement.unitPrice.toString()) : undefined,
+      productName: product?.name,
+      productSku: product?.sku,
+      originLocationName: originLocation?.name,
+      destLocationName: destLocation?.name,
+      createdByName: userCreatedBy?.name,
     };
   }
 }

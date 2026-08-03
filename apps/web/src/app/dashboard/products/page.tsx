@@ -20,6 +20,7 @@ import {
   getDaysUntilExpiration,
 } from '@/shared/lib/stock-utils';
 import { useAuth } from '@/modules/auth/context/auth-context';
+import { useDebounce } from '@/shared/hooks/use-debounce';
 import { Package, AlertTriangle, CalendarDays, Plus, Upload } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 
@@ -49,6 +50,7 @@ export default function ProductsPage() {
   const { hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<'items' | 'categories'>('items');
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 350);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [page, setPage] = useState(1);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -60,7 +62,7 @@ export default function ProductsPage() {
   const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({
     page,
     limit: 20,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     categoryId: selectedCategory || undefined,
   });
 
@@ -260,7 +262,7 @@ export default function ProductsPage() {
     [canUpdate],
   );
 
-  if (productsLoading && activeTab === 'items') {
+  if (productsLoading && !productsData && activeTab === 'items') {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-[var(--muted)]">Cargando productos...</div>
