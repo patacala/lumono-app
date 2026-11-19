@@ -10,8 +10,6 @@ npm run dev          # Start all apps in development
 npm run build        # Build all apps
 npm run lint         # Lint all apps
 npm run test         # Run all tests
-npm run docker:up    # Start PostgreSQL via Docker
-npm run docker:down  # Stop Docker services
 
 # Backend (apps/api)
 cd apps/api

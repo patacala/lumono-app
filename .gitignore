@@ -42,6 +42,9 @@ yarn-error.log*
 # Graphify
 graphify-out/
 
+# Local share archives from scripts/export-zip.sh
+exports/
+
 # Prisma
 apps/api/prisma/migrations
 

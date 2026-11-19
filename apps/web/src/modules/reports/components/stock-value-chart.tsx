@@ -4,22 +4,13 @@ import {
   PieChart,
   Pie,
   Cell,
+  Label,
   Tooltip,
   ResponsiveContainer,
   Legend,
 } from 'recharts';
 import { useInventorySummary } from '../hooks/use-reports';
-
-const COLORS = [
-  'oklch(68% 0.19 55)',    // amber/accent
-  'oklch(65% 0.18 145)',   // green
-  'oklch(62% 0.20 260)',   // blue
-  'oklch(65% 0.18 330)',   // pink
-  'oklch(70% 0.15 80)',    // yellow-green
-  'oklch(58% 0.20 290)',   // purple
-  'oklch(68% 0.15 30)',    // orange
-  'oklch(55% 0.18 200)',   // teal
-];
+import { ORANGE_SCALE, chartTooltip, CHART_INK, CHART_MUTED } from '@/shared/lib/chart-theme';
 
 export function StockValueChart() {
   const { data, isLoading } = useInventorySummary();
@@ -60,40 +51,43 @@ export function StockValueChart() {
             stroke="none"
           >
             {chartData.map((_entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-${index}`} fill={ORANGE_SCALE[index % ORANGE_SCALE.length]} />
             ))}
+            {/* Center label anchored to the actual donut center */}
+            <Label
+              position="center"
+              content={(props: any) => {
+                const { cx, cy } = props.viewBox as { cx: number; cy: number };
+                return (
+                  <g>
+                    <text
+                      x={cx}
+                      y={cy - 10}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={CHART_MUTED}
+                      style={{ fontSize: '10px', letterSpacing: '0.05em' }}
+                    >
+                      TOTAL
+                    </text>
+                    <text
+                      x={cx}
+                      y={cy + 11}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={CHART_INK}
+                      style={{ fontSize: '16px', fontWeight: 600, fontFamily: 'monospace' }}
+                    >
+                      ${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </text>
+                  </g>
+                );
+              }}
+            />
           </Pie>
-          {/* Center label */}
-          <text
-            x="40%"
-            y="47%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-[var(--muted)]"
-            style={{ fontSize: '10px' }}
-          >
-            Total
-          </text>
-          <text
-            x="40%"
-            y="55%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-[var(--fg)]"
-            style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'monospace' }}
-          >
-            ${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-          </text>
           <Tooltip
+            {...chartTooltip}
             formatter={(value: number) => `$${value.toLocaleString()}`}
-            contentStyle={{
-              backgroundColor: 'oklch(16% 0.008 260)',
-              border: '1px solid oklch(68% 0.19 55 / 0.3)',
-              borderRadius: '8px',
-              color: 'oklch(96% 0.004 260)',
-              fontSize: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-            }}
           />
           <Legend
             layout="vertical"

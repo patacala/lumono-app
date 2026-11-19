@@ -13,6 +13,7 @@ import {
   Legend,
 } from 'recharts';
 import { useInventorySummary } from '../hooks/use-reports';
+import { chartTooltip, chartCursor } from '@/shared/lib/chart-theme';
 
 const PERIOD_TABS = [
   { id: '10', label: 'Top 10' },
@@ -80,17 +81,7 @@ export function StockChart() {
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'oklch(16% 0.008 260)',
-              border: '1px solid oklch(68% 0.19 55 / 0.3)',
-              borderRadius: '8px',
-              color: 'oklch(96% 0.004 260)',
-              fontSize: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-            }}
-            cursor={{ fill: 'oklch(20% 0.008 260)', opacity: 0.3 }}
-          />
+          <Tooltip {...chartTooltip} cursor={chartCursor} />
           <Legend
             wrapperStyle={{ fontSize: '11px', color: 'oklch(58% 0.012 260)', paddingTop: '8px' }}
             iconType="circle"

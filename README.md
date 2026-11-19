@@ -14,57 +14,26 @@ A modern, permission-based inventory management system built as a monolith with 
 
 - Node.js >= 20
 - npm >= 10
-- Docker & Docker Compose (for easy setup)
+- PostgreSQL 16 running on localhost:5432
+- Redis on localhost:6379 for stock-alert and report queues (the API still starts if Redis is down; cache is skipped)
 
 ## 🚀 Quick Start
-
-### Option 1: Using Docker Compose (Recommended)
-
-1. **Clone and setup**
-```bash
-cd lumono
-npm install
-```
-
-2. **Start services**
-```bash
-npm run docker:up
-```
-
-This will start:
-- PostgreSQL database on port 5432
-- NestJS API on port 3001
-
-3. **Setup database**
-```bash
-cd apps/api
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:seed
-```
-
-4. **Start frontend (in a new terminal)**
-```bash
-cd apps/web
-npm run dev
-```
-
-Frontend will be available at: http://localhost:3000
-
-### Option 2: Manual Setup
 
 1. **Install dependencies**
 ```bash
 npm install
 ```
 
-2. **Start PostgreSQL** (using your preferred method)
+2. **Create the local database**
+```sql
+CREATE USER lumono WITH PASSWORD 'lumono_dev_password';
+CREATE DATABASE lumono_inventory OWNER lumono;
+```
 
 3. **Configure environment**
 ```bash
-cd apps/api
-cp .env.example .env
-# Edit .env with your database credentials
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
 ```
 
 4. **Setup database**
@@ -86,6 +55,9 @@ npm run dev
 cd apps/web
 npm run dev
 ```
+
+Frontend: http://localhost:3000  
+API: http://localhost:3001
 
 ## 🔐 Default Credentials
 
@@ -132,10 +104,8 @@ lumono/
 │           │   └── reports/          # Reports module
 │           └── shared/               # Shared components, utils
 │
-├── packages/
-│   └── tsconfig/                     # Shared TypeScript configs
-│
-└── docker-compose.yml                # Docker services
+└── packages/
+    └── tsconfig/                     # Shared TypeScript configs
 ```
 
 ## 🔑 Permissions System
@@ -256,8 +226,6 @@ npx playwright test --ui  # interactive mode
 - `npm run dev` - Start all apps in development
 - `npm run build` - Build all apps
 - `npm run lint` - Lint all apps
-- `npm run docker:up` - Start Docker services
-- `npm run docker:down` - Stop Docker services
 
 ### Backend (apps/api)
 - `npm run dev` - Start in watch mode

@@ -5,45 +5,32 @@
 ### 1. Install Dependencies
 
 ```bash
-cd /Users/peterbarranco/Desktop/lumono
 npm install
 ```
 
-### 2. Start Database
+### 2. Start PostgreSQL locally
 
-```bash
-# Start only PostgreSQL (recommended for development)
-docker-compose up -d postgres
+PostgreSQL 16 must be running on `localhost:5432` before the API starts. Create the dev role and database:
+
+```sql
+CREATE USER lumono WITH PASSWORD 'lumono_dev_password';
+CREATE DATABASE lumono_inventory OWNER lumono;
 ```
 
-Wait 10 seconds for PostgreSQL to be ready.
+Redis on `localhost:6379` is used by the stock-alert and report queues. The API still boots without it; cache calls are skipped.
 
 ### 3. Create Environment Files
 
 #### Backend: `apps/api/.env`
 
-Create this file manually (it's in .gitignore for security):
-
 ```bash
-cd apps/api
-cat > .env << 'EOF'
-DATABASE_URL="postgresql://lumono:lumono_dev_password@localhost:5432/lumono_inventory"
-JWT_ACCESS_SECRET="dev_access_secret_change_in_production"
-JWT_REFRESH_SECRET="dev_refresh_secret_change_in_production"
-JWT_ACCESS_EXPIRATION="15m"
-JWT_REFRESH_EXPIRATION="7d"
-NODE_ENV="development"
-PORT=3001
-EOF
+cp apps/api/.env.example apps/api/.env
 ```
 
 #### Frontend: `apps/web/.env.local`
 
 ```bash
-cd ../web
-cat > .env.local << 'EOF'
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-EOF
+cp apps/web/.env.example apps/web/.env.local
 ```
 
 ### 4. Setup Backend Database
@@ -166,24 +153,12 @@ npx playwright test
 npx playwright test --ui
 ```
 
-### Docker
-```bash
-# Stop services
-npm run docker:down
-
-# View logs
-npm run docker:logs
-
-# Restart services
-npm run docker:down && npm run docker:up
-```
-
 ## Troubleshooting
 
 ### Database Connection Issues
-1. Ensure Docker is running
-2. Check PostgreSQL is healthy: `docker ps`
-3. Verify DATABASE_URL in `apps/api/.env`
+1. Confirm PostgreSQL is running on `localhost:5432`
+2. Confirm the role `lumono` and database `lumono_inventory` exist
+3. Verify `DATABASE_URL` in `apps/api/.env`
 
 ### Port Already in Use
 - Backend (3001): Kill process or change PORT in `.env`

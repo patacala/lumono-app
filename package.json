@@ -13,11 +13,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo run clean && rm -rf node_modules",
-    "docker:up": "docker compose up postgres redis -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f",
-    "docker:build": "docker compose build",
-    "docker:full": "docker compose up --build -d"
+    "export:zip": "bash scripts/export-zip.sh"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
